@@ -164,6 +164,10 @@
             <el-icon><Menu /></el-icon>
             <span>菜单管理</span>
           </el-menu-item>
+          <el-menu-item index="/system/department">
+            <el-icon><OfficeBuilding /></el-icon>
+            <span>部门管理</span>
+          </el-menu-item>
           <el-menu-item index="/system/log">
             <el-icon><Document /></el-icon>
             <span>操作日志</span>
@@ -181,8 +185,13 @@
             <component :is="isCollapse ? 'Expand' : 'Fold'" />
           </el-icon>
           <el-breadcrumb separator="/">
-            <el-breadcrumb-item>首页</el-breadcrumb-item>
-            <el-breadcrumb-item>当前页面</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item
+              v-for="(item, index) in breadcrumbs"
+              :key="item.path"
+            >
+              {{ item.title }}
+            </el-breadcrumb-item>
           </el-breadcrumb>
         </div>
         <div class="right-area">
@@ -212,7 +221,11 @@
 
       <!-- 内容区域 -->
       <div class="app-main">
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <transition name="fade-transform" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </div>
     </div>
   </div>
@@ -244,6 +257,7 @@ import {
   Location,
   Setting,
   Menu,
+  OfficeBuilding,
   Expand,
   Fold,
   FullScreen,
@@ -258,6 +272,21 @@ const isFullscreen = ref(false)
 
 // 当前激活的菜单
 const activeMenu = computed(() => route.path)
+
+// 生成面包屑数据
+const breadcrumbs = computed(() => {
+  const matched = route.matched.filter(item => item.meta && item.meta.title)
+  const first = matched[0]
+
+  if (!first) {
+    return []
+  }
+
+  return matched.map(item => ({
+    path: item.path,
+    title: item.meta.title
+  }))
+})
 
 // 切换侧边栏
 const toggleSidebar = () => {
@@ -303,8 +332,10 @@ const handleUserInfo = () => {
   width: 240px;
   height: 100%;
   background-color: #304156;
-  transition: width 0.3s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
+  transform: translateZ(0);
+  will-change: width;
 }
 
 .app-wrapper.is-collapse .sidebar-container {
@@ -395,6 +426,22 @@ const handleUserInfo = () => {
   margin-left: 8px;
   font-size: 14px;
   color: #606266;
+}
+
+/* 路由切换动画 */
+.fade-transform-enter-active,
+.fade-transform-leave-active {
+  transition: all 0.3s;
+}
+
+.fade-transform-enter-from {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.fade-transform-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
 }
 
 .app-main {

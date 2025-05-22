@@ -269,6 +269,14 @@ const router = createRouter({
               },
             },
             {
+              path: 'department',
+              component: () => import('@/views/system/department/index.vue'),
+              meta: {
+                title: '部门管理',
+                icon: 'OfficeBuilding',
+              },
+            },
+            {
               path: 'log',
               component: () => import('@/views/system/log/index.vue'),
               meta: {

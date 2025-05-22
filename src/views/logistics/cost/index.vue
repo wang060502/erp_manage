@@ -161,8 +161,8 @@
         </el-form-item>
         <el-form-item label="支付状态" prop="paymentStatus">
           <el-radio-group v-model="form.paymentStatus">
-            <el-radio label="paid">已支付</el-radio>
-            <el-radio label="unpaid">未支付</el-radio>
+            <el-radio value="paid">已支付</el-radio>
+            <el-radio value="unpaid">未支付</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="支付时间" prop="paymentTime">

@@ -114,9 +114,9 @@
         </el-form-item>
         <el-form-item label="菜单类型" prop="type">
           <el-radio-group v-model="form.type">
-            <el-radio label="directory">目录</el-radio>
-            <el-radio label="menu">菜单</el-radio>
-            <el-radio label="button">按钮</el-radio>
+            <el-radio value="directory">目录</el-radio>
+            <el-radio value="menu">菜单</el-radio>
+            <el-radio value="button">按钮</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="菜单名称" prop="name">
@@ -139,8 +139,8 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio label="active">启用</el-radio>
-            <el-radio label="inactive">禁用</el-radio>
+            <el-radio value="active">启用</el-radio>
+            <el-radio value="inactive">禁用</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>

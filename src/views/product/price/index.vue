@@ -130,8 +130,8 @@
       <el-form ref="batchFormRef" :model="batchForm" :rules="batchRules" label-width="100px">
         <el-form-item label="调价方式" prop="type">
           <el-radio-group v-model="batchForm.type">
-            <el-radio label="fixed">固定金额</el-radio>
-            <el-radio label="percentage">百分比</el-radio>
+            <el-radio value="fixed">固定金额</el-radio>
+            <el-radio value="percentage">百分比</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="调价数值" prop="value">
