@@ -1,0 +1,406 @@
+<template>
+  <div class="app-wrapper" :class="{ 'is-collapse': isCollapse }">
+    <!-- 侧边栏 -->
+    <div class="sidebar-container">
+      <div class="logo-container">
+        <h1 class="logo-title" v-show="!isCollapse">ERP System</h1>
+        <h1 class="logo-title" v-show="isCollapse">ERP</h1>
+      </div>
+      <el-menu
+        class="sidebar-menu"
+        :default-active="activeMenu"
+        background-color="#304156"
+        text-color="#bfcbd9"
+        active-text-color="#409EFF"
+        :collapse="isCollapse"
+        :unique-opened="true"
+        router
+      >
+        <!-- 首页 -->
+        <el-menu-item index="/dashboard">
+          <el-icon><HomeFilled /></el-icon>
+          <span>首页</span>
+        </el-menu-item>
+
+        <!-- 商品管理 -->
+        <el-sub-menu index="product">
+          <template #title>
+            <el-icon><Goods /></el-icon>
+            <span>商品管理</span>
+          </template>
+          <el-menu-item index="/product/list">
+            <el-icon><List /></el-icon>
+            <span>商品列表</span>
+          </el-menu-item>
+          <el-menu-item index="/product/category">
+            <el-icon><Files /></el-icon>
+            <span>商品分类</span>
+          </el-menu-item>
+          <el-menu-item index="/product/price">
+            <el-icon><Money /></el-icon>
+            <span>价格管理</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 仓库管理 -->
+        <el-sub-menu index="warehouse">
+          <template #title>
+            <el-icon><House /></el-icon>
+            <span>仓库管理</span>
+          </template>
+          <el-menu-item index="/warehouse/list">
+            <el-icon><List /></el-icon>
+            <span>仓库列表</span>
+          </el-menu-item>
+          <el-menu-item index="/warehouse/inventory">
+            <el-icon><Box /></el-icon>
+            <span>库存管理</span>
+          </el-menu-item>
+          <el-menu-item index="/warehouse/warning">
+            <el-icon><Warning /></el-icon>
+            <span>库存预警</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 出入库管理 -->
+        <el-sub-menu index="inventory">
+          <template #title>
+            <el-icon><Operation /></el-icon>
+            <span>出入库管理</span>
+          </template>
+          <el-menu-item index="/inventory/in">
+            <el-icon><TopRight /></el-icon>
+            <span>入库管理</span>
+          </el-menu-item>
+          <el-menu-item index="/inventory/out">
+            <el-icon><BottomLeft /></el-icon>
+            <span>出库管理</span>
+          </el-menu-item>
+          <el-menu-item index="/inventory/transfer">
+            <el-icon><Right /></el-icon>
+            <span>调拨管理</span>
+          </el-menu-item>
+          <el-menu-item index="/inventory/history">
+            <el-icon><Timer /></el-icon>
+            <span>库存记录</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 客户管理 -->
+        <el-sub-menu index="customer">
+          <template #title>
+            <el-icon><User /></el-icon>
+            <span>客户管理</span>
+          </template>
+          <el-menu-item index="/customer/list">
+            <el-icon><List /></el-icon>
+            <span>客户列表</span>
+          </el-menu-item>
+          <el-menu-item index="/customer/category">
+            <el-icon><Files /></el-icon>
+            <span>客户分类</span>
+          </el-menu-item>
+          <el-menu-item index="/customer/analysis">
+            <el-icon><DataLine /></el-icon>
+            <span>客户分析</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 订单管理 -->
+        <el-sub-menu index="order">
+          <template #title>
+            <el-icon><Document /></el-icon>
+            <span>订单管理</span>
+          </template>
+          <el-menu-item index="/order/list">
+            <el-icon><List /></el-icon>
+            <span>订单列表</span>
+          </el-menu-item>
+          <el-menu-item index="/order/create">
+            <el-icon><Plus /></el-icon>
+            <span>创建订单</span>
+          </el-menu-item>
+          <el-menu-item index="/order/analysis">
+            <el-icon><TrendCharts /></el-icon>
+            <span>订单分析</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 物流管理 -->
+        <el-sub-menu index="logistics">
+          <template #title>
+            <el-icon><Van /></el-icon>
+            <span>物流管理</span>
+          </template>
+          <el-menu-item index="/logistics/tracking">
+            <el-icon><Location /></el-icon>
+            <span>物流跟踪</span>
+          </el-menu-item>
+          <el-menu-item index="/logistics/carrier">
+            <el-icon><Van /></el-icon>
+            <span>承运商管理</span>
+          </el-menu-item>
+          <el-menu-item index="/logistics/cost">
+            <el-icon><Money /></el-icon>
+            <span>物流成本</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 系统管理 -->
+        <el-sub-menu index="system">
+          <template #title>
+            <el-icon><Setting /></el-icon>
+            <span>系统管理</span>
+          </template>
+          <el-menu-item index="/system/user">
+            <el-icon><User /></el-icon>
+            <span>用户管理</span>
+          </el-menu-item>
+          <el-menu-item index="/system/role">
+            <el-icon><UserFilled /></el-icon>
+            <span>角色管理</span>
+          </el-menu-item>
+          <el-menu-item index="/system/menu">
+            <el-icon><Menu /></el-icon>
+            <span>菜单管理</span>
+          </el-menu-item>
+          <el-menu-item index="/system/log">
+            <el-icon><Document /></el-icon>
+            <span>操作日志</span>
+          </el-menu-item>
+        </el-sub-menu>
+      </el-menu>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="main-container">
+      <!-- 顶部导航栏 -->
+      <div class="navbar">
+        <div class="left-area">
+          <el-icon class="collapse-btn" @click="toggleSidebar">
+            <component :is="isCollapse ? 'Expand' : 'Fold'" />
+          </el-icon>
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item>首页</el-breadcrumb-item>
+            <el-breadcrumb-item>当前页面</el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
+        <div class="right-area">
+          <el-tooltip :content="isFullscreen ? '退出全屏' : '全屏'" placement="bottom">
+            <el-icon class="action-icon" @click="toggleFullscreen">
+              <component :is="isFullscreen ? 'Close' : 'FullScreen'" />
+            </el-icon>
+          </el-tooltip>
+          <el-dropdown>
+            <span class="user-info">
+              <el-avatar
+                :size="32"
+                src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
+              />
+              <span class="username">管理员</span>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="handleUserInfo">个人信息</el-dropdown-item>
+                <el-dropdown-item>修改密码</el-dropdown-item>
+                <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </div>
+
+      <!-- 内容区域 -->
+      <div class="app-main">
+        <router-view />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import {
+  HomeFilled,
+  Goods,
+  List,
+  Files,
+  Money,
+  House,
+  Box,
+  Warning,
+  Operation,
+  TopRight,
+  BottomLeft,
+  Right,
+  Timer,
+  User,
+  UserFilled,
+  Document,
+  Plus,
+  TrendCharts,
+  Van,
+  Location,
+  Setting,
+  Menu,
+  Expand,
+  Fold,
+  FullScreen,
+  Close,
+} from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
+
+const route = useRoute()
+const router = useRouter()
+const isCollapse = ref(false)
+const isFullscreen = ref(false)
+
+// 当前激活的菜单
+const activeMenu = computed(() => route.path)
+
+// 切换侧边栏
+const toggleSidebar = () => {
+  isCollapse.value = !isCollapse.value
+}
+
+// 切换全屏
+const toggleFullscreen = () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen()
+    isFullscreen.value = true
+  } else {
+    document.exitFullscreen()
+    isFullscreen.value = false
+  }
+}
+
+// 监听全屏变化
+document.addEventListener('fullscreenchange', () => {
+  isFullscreen.value = !!document.fullscreenElement
+})
+
+// 退出登录
+const handleLogout = () => {
+  localStorage.removeItem('token')
+  router.push('/login')
+}
+
+// 个人信息
+const handleUserInfo = () => {
+  router.push('/user/info')
+}
+</script>
+
+<style scoped>
+.app-wrapper {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
+
+.sidebar-container {
+  width: 240px;
+  height: 100%;
+  background-color: #304156;
+  transition: width 0.3s;
+  overflow-y: auto;
+}
+
+.app-wrapper.is-collapse .sidebar-container {
+  width: 64px;
+}
+
+.logo-container {
+  height: 60px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #2b3649;
+}
+
+.logo-title {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.sidebar-menu {
+  border-right: none;
+}
+
+.sidebar-menu:not(.el-menu--collapse) {
+  width: 240px;
+}
+
+.main-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.navbar {
+  height: 60px;
+  background-color: #fff;
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.left-area {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.collapse-btn {
+  font-size: 20px;
+  cursor: pointer;
+  color: #606266;
+}
+
+.collapse-btn:hover {
+  color: #409eff;
+}
+
+.right-area {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.action-icon {
+  font-size: 20px;
+  cursor: pointer;
+  color: #606266;
+}
+
+.action-icon:hover {
+  color: #409eff;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.username {
+  margin-left: 8px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.app-main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #f0f2f5;
+}
+</style>
