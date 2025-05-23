@@ -12,16 +12,16 @@ export function createDepartment(data: CreateDepartmentParams) {
   return request({
     url: '/api/depts',
     method: 'post',
-    data
+    data,
   })
 }
 
 // 部门树节点类型
 export interface DepartmentTreeItem {
-  deptId: number
-  parentId: number
-  deptName: string
-  orderNum: number
+  dept_id: number
+  parent_id: number
+  dept_name: string
+  order_num: number
   status: number
   children?: DepartmentTreeItem[]
 }
@@ -33,7 +33,7 @@ export function getDepartmentTree() {
     depts: DepartmentTreeItem[]
   }>({
     url: '/api/depts',
-    method: 'get'
+    method: 'get',
   })
 }
 
@@ -49,7 +49,7 @@ export function updateDepartment(deptId: number, data: UpdateDepartmentParams) {
   return request({
     url: `/api/depts/${deptId}`,
     method: 'put',
-    data
+    data,
   })
 }
 
@@ -57,6 +57,6 @@ export function updateDepartment(deptId: number, data: UpdateDepartmentParams) {
 export function deleteDepartment(deptId: number) {
   return request({
     url: `/api/depts/${deptId}`,
-    method: 'delete'
+    method: 'delete',
   })
 }

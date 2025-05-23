@@ -1,6 +1,6 @@
 <template>
-  <div class="department-page">
-    <el-card>
+  <el-card class="department-page">
+    <div>
       <div class="header-bar">
         <span class="title">部门管理</span>
         <div>
@@ -17,7 +17,7 @@
       <el-table
         ref="deptTable"
         :data="deptTree"
-        style="width: 100%;"
+        style="width: 100%"
         row-key="deptId"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         default-expand-all
@@ -33,12 +33,20 @@
         </el-table-column>
         <el-table-column label="操作" width="180" align="center">
           <template #default="{ row }">
-            <el-button size="small" type="primary" link @click="openDialog('edit', row)">编辑</el-button>
-            <el-button size="small" type="danger" link @click="deleteDepartmentConfirm(row.deptId, getDeptPath(row.deptId).join(' / '))">删除</el-button>
+            <el-button size="small" type="primary" link @click="openDialog('edit', row)"
+              >编辑</el-button
+            >
+            <el-button
+              size="small"
+              type="danger"
+              link
+              @click="deleteDepartmentConfirm(row.deptId, getDeptPath(row.deptId).join(' / '))"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
-    </el-card>
+    </div>
 
     <!-- 新增/编辑弹窗 -->
     <el-dialog
@@ -56,7 +64,7 @@
             clearable
             placeholder="请选择上级部门"
             :check-strictly="true"
-            style="width: 100%;"
+            style="width: 100%"
           />
         </el-form-item>
         <el-form-item label="部门名称" prop="deptName">
@@ -77,7 +85,7 @@
         <el-button type="primary" @click="onSubmit">保存</el-button>
       </template>
     </el-dialog>
-  </div>
+  </el-card>
 </template>
 
 <script lang="ts" setup>
@@ -89,7 +97,7 @@ import {
   updateDepartment,
   deleteDepartment,
   DepartmentTreeItem,
-  CreateDepartmentParams
+  CreateDepartmentParams,
 } from '@/api/system/department'
 import { Fold, Expand } from '@element-plus/icons-vue'
 
@@ -103,11 +111,11 @@ const form = reactive<CreateDepartmentParams & { deptId?: number }>({
   deptName: '',
   orderNum: 0,
   status: 1,
-  deptId: undefined
+  deptId: undefined,
 })
 
 const rules = {
-  deptName: [{ required: true, message: '请输入部门名称', trigger: 'blur' }]
+  deptName: [{ required: true, message: '请输入部门名称', trigger: 'blur' }],
 }
 
 const deptTable = ref()
@@ -115,13 +123,13 @@ const deptTable = ref()
 const isAllExpanded = ref(true)
 
 function convertDeptTree(arr) {
-  return arr.map(item => ({
+  return arr.map((item) => ({
     deptId: item.dept_id,
     parentId: item.parent_id,
     deptName: item.dept_name,
     orderNum: item.order_num,
     status: item.status,
-    children: item.children ? convertDeptTree(item.children) : []
+    children: item.children ? convertDeptTree(item.children) : [],
   }))
 }
 
@@ -165,16 +173,12 @@ const onSubmit = async () => {
 }
 
 const deleteDepartmentConfirm = (deptId: number, deptPath: string) => {
-  ElMessageBox.confirm(
-    `确定要删除部门【${deptPath}】吗？`,
-    '提示',
-    {
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-      type: 'warning',
-      confirmButtonClass: 'el-button--danger'
-    }
-  ).then(async () => {
+  ElMessageBox.confirm(`确定要删除部门【${deptPath}】吗？`, '提示', {
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+    type: 'warning',
+    confirmButtonClass: 'el-button--danger',
+  }).then(async () => {
     await deleteDepartment(deptId)
     ElMessage.success('删除成功')
     fetchTree()
@@ -182,14 +186,14 @@ const deleteDepartmentConfirm = (deptId: number, deptPath: string) => {
 }
 
 const treeSelectOptions = computed(() => [
-  { deptId: undefined, deptName: '顶级部门', children: deptTree.value }
+  { deptId: undefined, deptName: '顶级部门', children: deptTree.value },
 ])
 
 // 递归获取所有节点
 function getAllRows(tree) {
   const result = []
   function traverse(nodes) {
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       result.push(node)
       if (node.children && node.children.length) {
         traverse(node.children)
@@ -204,7 +208,7 @@ const toggleExpandAll = async () => {
   await nextTick()
   const rows = getAllRows(deptTree.value)
   const expand = !isAllExpanded.value
-  rows.forEach(row => {
+  rows.forEach((row) => {
     deptTable.value.toggleRowExpansion(row, expand)
   })
   isAllExpanded.value = expand
@@ -213,7 +217,7 @@ const toggleExpandAll = async () => {
 const expandAll = async () => {
   await nextTick()
   const rows = getAllRows(deptTree.value)
-  rows.forEach(row => {
+  rows.forEach((row) => {
     deptTable.value.toggleRowExpansion(row, true)
   })
   isAllExpanded.value = true
@@ -236,6 +240,11 @@ onMounted(fetchTree)
 </script>
 
 <style scoped>
+.department-page {
+  border-radius: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
 .header-bar {
   display: flex;
   justify-content: space-between;
