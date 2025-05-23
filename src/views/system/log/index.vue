@@ -1,69 +1,72 @@
 <template>
-  <div class="log-container">
-    <!-- 搜索表单 -->
-    <el-card class="search-card">
-      <el-form :model="searchForm" inline>
-        <el-form-item label="操作模块">
-          <el-input v-model="searchForm.module" placeholder="请输入操作模块" clearable />
-        </el-form-item>
-        <el-form-item label="操作类型">
-          <el-select v-model="searchForm.type" placeholder="请选择操作类型" clearable>
-            <el-option label="查询" value="query" />
-            <el-option label="新增" value="create" />
-            <el-option label="修改" value="update" />
-            <el-option label="删除" value="delete" />
-            <el-option label="导出" value="export" />
-            <el-option label="导入" value="import" />
-            <el-option label="其他" value="other" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="操作状态">
-          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
-            <el-option label="成功" value="success" />
-            <el-option label="失败" value="error" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="操作时间">
-          <el-date-picker
-            v-model="searchForm.timeRange"
-            type="daterange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-            value-format="YYYY-MM-DD"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon>
-            搜索
-          </el-button>
-          <el-button @click="handleReset">
-            <el-icon><Refresh /></el-icon>
-            重置
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+  <el-card class="log-container">
+    <div class="log-header">
+      <div class="log-header-title">操作日志</div>
+    </div>
+    <!-- 操作类型说明 -->
+    <div class="explain-card" style="margin-bottom: 20px;">
+      <div style="font-weight: 600; font-size: 16px; color: #222; margin-bottom: 10px; display: flex; align-items: center;">
+        <el-icon style="font-size: 20px; color: #409EFF; margin-right: 6px;">
+          <InfoFilled />
+        </el-icon>
+        操作类型说明
+      </div>
+      <div class="explain-list">
+        <div class="explain-row">
+          <el-tag type="success" effect="plain" class="explain-tag">Create</el-tag>
+          <span class="explain-label">新增（创建一条新数据）</span>
+        </div>
+        <div class="explain-row">
+          <el-tag type="warning" effect="plain" class="explain-tag">Update</el-tag>
+          <span class="explain-label">修改（编辑已有数据）</span>
+        </div>
+        <div class="explain-row">
+          <el-tag type="danger" effect="plain" class="explain-tag">Delete</el-tag>
+          <span class="explain-label">删除（移除数据）</span>
+        </div>
+        <div class="explain-row">
+          <el-tag type="info" effect="plain" class="explain-tag">Query</el-tag>
+          <span class="explain-label">查询（查看/检索数据）</span>
+        </div>
+        <div class="explain-row">
+          <el-tag type="primary" effect="plain" class="explain-tag">Export</el-tag>
+          <span class="explain-label">导出（下载数据）</span>
+        </div>
+        <div class="explain-row">
+          <el-tag type="primary" effect="plain" class="explain-tag">Import</el-tag>
+          <span class="explain-label">导入（上传数据）</span>
+        </div>
+      </div>
+    </div>
 
     <!-- 操作栏 -->
     <div class="operation-bar">
-      <el-button type="success" @click="handleExport">
-        <el-icon><Download /></el-icon>
-        导出数据
+      <el-switch
+        v-model="autoRefresh"
+        active-text="自动刷新"
+        inactive-text="手动刷新"
+        style="margin-right: 16px;"
+      />
+      <el-button type="primary" @click="fetchLogs" :disabled="autoRefresh">
+        <el-icon><Refresh /></el-icon>
+        刷新
       </el-button>
-      <el-button type="danger" @click="handleClear">
-        <el-icon><Delete /></el-icon>
-        清空日志
-      </el-button>
+    </div>
+    <!-- 自动清理提示 -->
+    <div style="margin-bottom: 16px; color: #909399; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+      <el-icon style="font-size: 16px; color: #409EFF;"><InfoFilled /></el-icon>
+      日志每天凌晨 2 点自动清理，仅保留最近 7 天记录。
     </div>
 
     <!-- 日志列表 -->
-    <el-card class="table-card">
-      <el-table v-loading="loading" :data="tableData" border style="width: 100%">
+    <div class="table-card">
+      <el-table v-loading="loading" :data="tableData"  style="width: 100%">
+        <template #empty>
+          <div>当前数据：{{ tableData }}</div>
+        </template>
         <el-table-column prop="id" label="日志编号" width="100" />
         <el-table-column prop="module" label="操作模块" min-width="120" />
-        <el-table-column prop="type" label="操作类型" width="100">
+        <el-table-column prop="type" label="操作类型" width="300">
           <template #default="{ row }">
             <el-tag :type="getOperationTypeTag(row.type)">{{
               getOperationTypeText(row.type)
@@ -77,8 +80,6 @@
           show-overflow-tooltip
         />
         <el-table-column prop="operator" label="操作人员" width="120" />
-        <el-table-column prop="ip" label="操作IP" width="140" />
-        <el-table-column prop="location" label="操作地点" min-width="140" show-overflow-tooltip />
         <el-table-column prop="status" label="操作状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 'success' ? 'success' : 'danger'">
@@ -106,7 +107,7 @@
           @current-change="handleCurrentChange"
         />
       </div>
-    </el-card>
+    </div>
 
     <!-- 详情对话框 -->
     <el-dialog v-model="dialogVisible" title="操作日志详情" width="800px">
@@ -124,8 +125,6 @@
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="操作人员">{{ detail.operator }}</el-descriptions-item>
-        <el-descriptions-item label="操作IP">{{ detail.ip }}</el-descriptions-item>
-        <el-descriptions-item label="操作地点">{{ detail.location }}</el-descriptions-item>
         <el-descriptions-item label="操作时间">{{ detail.createTime }}</el-descriptions-item>
         <el-descriptions-item label="操作描述" :span="2">{{
           detail.description
@@ -134,56 +133,44 @@
         <el-descriptions-item label="请求参数" :span="2">
           <pre>{{ detail.params }}</pre>
         </el-descriptions-item>
-        <el-descriptions-item label="返回结果" :span="2">
-          <pre>{{ detail.result }}</pre>
-        </el-descriptions-item>
-        <el-descriptions-item label="错误信息" :span="2" v-if="detail.status === 'error'">
-          <pre class="error-message">{{ detail.error }}</pre>
-        </el-descriptions-item>
       </el-descriptions>
     </el-dialog>
-  </div>
+  </el-card>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { Search, Refresh, Download, Delete } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-
-// 搜索表单
-const searchForm = reactive({
-  module: '',
-  type: '',
-  status: '',
-  timeRange: [],
-})
+import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
+import { Refresh, InfoFilled } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { queryOperationLogs } from '@/api/system/log'
 
 // 表格数据
 const loading = ref(false)
-const tableData = ref([
-  {
-    id: 1,
-    module: '用户管理',
-    type: 'create',
-    description: '新增用户：admin',
-    operator: 'admin',
-    ip: '192.168.1.1',
-    location: '广东省深圳市',
-    status: 'success',
-    createTime: '2024-03-20 10:00:00',
-  },
-  {
-    id: 2,
-    module: '角色管理',
-    type: 'update',
-    description: '修改角色：管理员',
-    operator: 'admin',
-    ip: '192.168.1.1',
-    location: '广东省深圳市',
-    status: 'error',
-    createTime: '2024-03-20 11:00:00',
-  },
-])
+interface LogItem {
+  log_id: number
+  user_id: number
+  operation: string
+  method: string
+  params: string
+  ip: string
+  create_time: string
+}
+
+interface TableLogItem {
+  id: number
+  type: string
+  method: string
+  params: string
+  ip: string
+  createTime: string
+  operator: string
+  description: string
+  status: string
+  module: string
+  location: string
+}
+
+const tableData = ref<TableLogItem[]>([])
 
 // 分页
 const currentPage = ref(1)
@@ -236,71 +223,129 @@ const getOperationTypeText = (type: string) => {
   return typeMap[type] || type
 }
 
-// 搜索
+const autoRefresh = ref(true)
+let autoRefreshTimer: number | undefined
+
+const setupAutoRefresh = () => {
+  if (autoRefresh.value) {
+    autoRefreshTimer = window.setInterval(() => {
+      fetchLogs()
+    }, 60 * 1000)
+  } else if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer)
+    autoRefreshTimer = undefined
+  }
+}
+
+// 获取日志列表
+const fetchLogs = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: currentPage.value,
+      limit: pageSize.value,
+    }
+    const res = await queryOperationLogs(params)
+    // 直接从res解构
+    const { logs = [], logsDesc = [], pagination = { total: 0, page: 1, limit: 10 } } = res || {}
+
+    tableData.value = logs.map((item: LogItem, idx: number) => {
+      let paramsObj = {}
+      try {
+        paramsObj = JSON.parse(item.params)
+      } catch (e) {
+        console.error('解析 params 失败:', e)
+      }
+      return {
+        id: item.log_id,
+        type: item.operation,
+        method: item.method,
+        params: JSON.stringify(paramsObj, null, 2),
+        ip: item.ip,
+        createTime: item.create_time.replace('T', ' ').replace('.000Z', ''),
+        operator: 'admin',
+        description: logsDesc[idx] || '',
+        status: 'success',
+        module: item.operation.includes('Role') ? '角色管理' :
+                item.operation.includes('Menu') ? '菜单管理' :
+                item.operation.includes('Dept') ? '部门管理' :
+                item.operation.includes('Log') ? '操作日志' :
+                item.operation.includes('Operation') ? '操作日志' :
+                item.operation.includes('OperationLog') ? '操作日志' :
+                item.operation.includes('OperationLog') ? '操作日志' :
+                item.operation.includes('User') ? '用户管理' : '其他',
+        location: '-',
+      } as TableLogItem
+    })
+    total.value = pagination.total
+    currentPage.value = pagination.page
+    pageSize.value = pagination.limit
+    console.log('tableData', tableData.value)
+  } catch (error) {
+    console.error('获取日志列表失败:', error)
+    ElMessage.error('获取日志列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchLogs()
+  setupAutoRefresh()
+})
+
+onUnmounted(() => {
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer)
+  }
+})
+
+watch(autoRefresh, () => {
+  setupAutoRefresh()
+})
+
 const handleSearch = () => {
-  // TODO: 实现搜索逻辑
-  console.log('搜索条件：', searchForm)
+  currentPage.value = 1
+  fetchLogs()
 }
 
-// 重置
 const handleReset = () => {
-  searchForm.module = ''
-  searchForm.type = ''
-  searchForm.status = ''
-  searchForm.timeRange = []
-}
-
-// 导出
-const handleExport = () => {
-  // TODO: 实现导出逻辑
-  ElMessage.success('导出成功')
-}
-
-// 清空
-const handleClear = () => {
-  ElMessageBox.confirm('确认清空所有操作日志？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning',
-  }).then(() => {
-    // TODO: 实现清空逻辑
-    ElMessage.success('清空成功')
-  })
+  currentPage.value = 1
+  fetchLogs()
 }
 
 // 查看详情
 const handleView = (row: (typeof tableData.value)[0]) => {
   Object.assign(detail, row)
-  // TODO: 获取详细信息
-  detail.method = 'POST'
-  detail.params = JSON.stringify({ id: 1, name: 'admin' }, null, 2)
-  detail.result = JSON.stringify({ code: 200, message: 'success' }, null, 2)
-  if (row.status === 'error') {
-    detail.error = '操作失败：权限不足'
-  }
   dialogVisible.value = true
 }
 
-// 分页大小改变
 const handleSizeChange = (val: number) => {
   pageSize.value = val
-  // TODO: 重新加载数据
+  currentPage.value = 1
+  fetchLogs()
 }
 
-// 当前页改变
 const handleCurrentChange = (val: number) => {
   currentPage.value = val
-  // TODO: 重新加载数据
+  fetchLogs()
 }
 </script>
 
 <style scoped>
-.log-container {
-  padding: 20px;
-}
-
-.search-card {
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
+}
+.log-header-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #222;
+}
+.log-container {
+  border-radius: 12px;
 }
 
 .operation-bar {
@@ -331,5 +376,39 @@ pre {
 
 .error-message {
   color: #f56c6c;
+}
+
+.explain-card {
+  border-radius: 10px;
+  border: none;
+  padding: 5px;
+}
+
+.explain-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+}
+
+.explain-row {
+  display: flex;
+  align-items: center;
+  min-width: 220px;
+  margin-bottom: 4px;
+}
+
+.explain-tag {
+  width: 64px;
+  text-align: center;
+  font-size: 14px;
+  margin-right: 10px;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+.explain-label {
+  color: #888;
+  font-size: 14px;
+  line-height: 1.6;
 }
 </style>

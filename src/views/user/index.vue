@@ -2,7 +2,7 @@
   <div class="user-profile-bg">
     <el-card class="welcome-card-pro" shadow="hover" v-if="user">
       <div class="welcome-section">
-        <div class="welcome-title">欢迎回来，{{ user.realName || user.username }}！</div>
+        <div class="welcome-title">欢迎回来，{{ user.real_name || user.username }}！</div>
         <div class="welcome-desc">祝您工作愉快，开启高效的一天。</div>
       </div>
     </el-card>
@@ -46,10 +46,11 @@
           <div class="profile-header-pro">
             <div class="avatar-ring-pro">
               <div class="avatar-glow"></div>
-              <img :src="user.avatar || defaultAvatar" class="avatar-pro" alt="头像" />
+              <img v-if="user.avatar" :src="user.avatar" class="avatar-pro" alt="头像" />
+              <div v-else class="avatar-pro avatar-text">{{ user.real_name ? user.real_name.charAt(0) : user.username.charAt(0) }}</div>
             </div>
             <div class="profile-main-pro">
-              <div class="profile-name-pro">{{ user.realName || user.username }}</div>
+              <div class="profile-name-pro">{{ user.real_name || user.username }}</div>
               <div class="profile-username-pro">用户名：{{ user.username }}</div>
             </div>
           </div>
@@ -58,7 +59,7 @@
               <div class="group-title">联系方式</div>
               <div class="info-row-pro"><span>邮箱</span>{{ user.email || '未填写' }}</div>
               <div class="info-row-pro"><span>手机号</span>{{ user.mobile || '未填写' }}</div>
-              <div class="info-row-pro"><span>部门ID</span>{{ user.deptId ?? '未填写' }}</div>
+              <div class="info-row-pro"><span>部门</span>{{ user.dept_name || '未填写' }}</div>
             </div>
             <div class="divider"></div>
             <div class="info-group">
@@ -69,9 +70,9 @@
                   {{ user.status === 1 ? '启用' : '禁用' }}
                 </el-tag>
               </div>
-              <div class="info-row-pro"><span>注册时间</span>{{ formatTime(user.createTime) }}</div>
+              <div class="info-row-pro"><span>注册时间</span>{{ formatTime(user.create_time) }}</div>
               <div class="info-row-pro">
-                <span>最后登录</span>{{ formatTime(user.lastLoginTime) }}
+                <span>最后登录</span>{{ formatTime(user.last_login_time) }}
               </div>
             </div>
             <div class="divider"></div>
@@ -81,13 +82,13 @@
                 <span>角色</span>
                 <el-tag
                   v-for="role in user.roles"
-                  :key="role.roleId"
+                  :key="role.role_id"
                   type="primary"
                   class="role-tag-pro"
                   size="small"
                   effect="dark"
                 >
-                  {{ role.roleName }}
+                  {{ role.role_name }}
                 </el-tag>
               </div>
             </div>
@@ -594,6 +595,15 @@ onMounted(async () => {
   position: relative;
   z-index: 2;
 }
+.avatar-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2563eb;
+  background: #e0e7ef;
+}
 .profile-main-pro {
   flex: 1;
 }
@@ -694,6 +704,103 @@ onMounted(async () => {
   .tab-pane-card {
     max-width: 98vw;
     padding: 18px 6vw 18px 6vw;
+  }
+}
+@media (max-width: 600px) {
+  .user-main-layout {
+    flex-direction: column;
+    gap: 12px;
+    min-height: unset;
+    padding: 0 4vw;
+  }
+  .user-left, .user-right {
+    max-width: 100vw;
+    width: 100vw;
+    min-width: 0;
+    padding: 0;
+  }
+  .profile-card-pro, .weather-card-pro {
+    max-width: 100vw;
+    width: 100vw;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px 0 #2563eb11;
+    margin: 0 0 12px 0;
+    padding: 18px 8px 18px 8px;
+  }
+  .profile-header-pro, .profile-info-pro {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .welcome-card-pro {
+    margin-bottom: 16px;
+    border-radius: 12px;
+    padding: 0 8px;
+  }
+  .welcome-title {
+    font-size: 1.2rem;
+  }
+  .profile-name-pro {
+    font-size: 1.1rem;
+  }
+  .avatar-pro, .avatar-text {
+    width: 48px;
+    height: 48px;
+    font-size: 1.2rem;
+  }
+  .tab-pane-card {
+    max-width: 100vw;
+    padding: 12px 2vw 12px 2vw;
+    border-radius: 10px;
+  }
+}
+@media (min-width: 601px) and (max-width: 1024px) {
+  .user-main-layout {
+    flex-direction: column;
+    gap: 24px;
+    min-height: unset;
+  }
+  .user-left, .user-right {
+    min-width: 0;
+    padding: 10px;
+  }
+  .profile-card-pro, .weather-card-pro {
+    max-width: 98vw;
+    border-radius: 16px;
+    margin: 0 0 18px 0;
+    padding: 24px 12px 24px 12px;
+  }
+  .profile-header-pro, .profile-info-pro {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .welcome-card-pro {
+    margin-bottom: 20px;
+    border-radius: 16px;
+    padding: 0 12px;
+  }
+  .welcome-title {
+    font-size: 1.5rem;
+  }
+  .profile-name-pro {
+    font-size: 1.2rem;
+  }
+  .avatar-pro, .avatar-text {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+  .tab-pane-card {
+    max-width: 98vw;
+    padding: 18px 4vw 18px 4vw;
+    border-radius: 14px;
+  }
+
+}
+/* 桌面端大屏适配（可选，已基本覆盖） */
+@media (min-width: 1025px) {
+  .user-main-layout {
+    gap: 120px;
+    padding: 0;
   }
 }
 </style>
