@@ -1,26 +1,49 @@
 <template>
-  <div class="customer-list-container">
+  <el-card class="customer-list-container">
+    <div class="customer-list-title">
+      <div class="title">客户列表</div>
+    </div>
     <!-- 搜索栏 -->
-    <el-card class="search-card">
+    <div class="search-card">
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="客户名称">
           <el-input v-model="searchForm.name" placeholder="请输入客户名称" clearable />
         </el-form-item>
-        <el-form-item label="客户类型">
-          <el-select v-model="searchForm.type" placeholder="请选择客户类型" clearable>
-            <el-option label="个人" value="personal" />
-            <el-option label="企业" value="enterprise" />
+        <el-form-item label="客户状态" style="width: 220px">
+          <el-select v-model="searchForm.status" placeholder="请选择客户状态" clearable>
+            <el-option
+              v-for="item in customerStatusOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="客户等级">
-          <el-select v-model="searchForm.level" placeholder="请选择客户等级" clearable>
-            <el-option label="普通" value="normal" />
-            <el-option label="VIP" value="vip" />
-            <el-option label="钻石" value="diamond" />
+        <el-form-item label="付款状态" style="width: 220px">
+          <el-select v-model="searchForm.payment_status" placeholder="请选择付款状态" clearable>
+            <el-option
+              v-for="item in paymentStatusOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="联系电话">
-          <el-input v-model="searchForm.phone" placeholder="请输入联系电话" clearable />
+        <el-form-item label="创建者">
+          <el-select
+            v-model="searchForm.creator_id"
+            placeholder="请选择创建者"
+            clearable
+            filterable
+            style="width: 180px"
+          >
+            <el-option
+              v-for="item in creatorOptions"
+              :key="item.user_id"
+              :label="item.username"
+              :value="item.user_id"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
@@ -33,7 +56,7 @@
           </el-button>
         </el-form-item>
       </el-form>
-    </el-card>
+    </div>
 
     <!-- 操作栏 -->
     <div class="operation-bar">
@@ -45,37 +68,103 @@
         <el-icon><Download /></el-icon>
         导出数据
       </el-button>
+      <el-button type="danger" @click="handleBatchDelete">
+        <el-icon><Delete /></el-icon>
+        批量删除
+      </el-button>
     </div>
 
     <!-- 客户列表 -->
-    <el-card class="table-card">
-      <el-table v-loading="loading" :data="tableData" border>
+    <div class="table-card">
+      <el-table v-loading="loading" :data="tableData" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="50" />
         <el-table-column type="index" label="序号" width="60" />
-        <el-table-column prop="name" label="客户名称" min-width="150" />
-        <el-table-column prop="type" label="客户类型" width="100">
+        <el-table-column prop="customer_name" label="客户名称" min-width="150">
           <template #default="{ row }">
-            <el-tag :type="row.type === 'enterprise' ? 'primary' : 'success'">
-              {{ row.type === 'enterprise' ? '企业' : '个人' }}
+            <el-link type="primary" @click="showDetail(row)">
+              {{ row.customer_name }}
+            </el-link>
+          </template>
+        </el-table-column>
+        <el-table-column prop="customer_status" label="客户状态" width="120">
+          <template #default="{ row }">
+            <el-tag
+              :type="
+                row.customer_status === '成交客户'
+                  ? 'warning'
+                  : row.customer_status === '潜在客户'
+                    ? 'info'
+                    : row.customer_status === '战略合作'
+                      ? 'success'
+                      : row.customer_status === '无效客户'
+                        ? 'danger'
+                        : 'default'
+              "
+              effect="light"
+            >
+              {{ row.customer_status }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="level" label="客户等级" width="100">
+        <el-table-column prop="customer_level" label="客户级别" width="120">
           <template #default="{ row }">
-            <el-tag :type="getLevelTag(row.level)">
-              {{ getLevelLabel(row.level) }}
+            <el-tag :type="row.customer_level === '重要客户' ? 'danger' : 'success'" effect="light">
+              {{ row.customer_level }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="contact" label="联系人" width="100" />
-        <el-table-column prop="phone" label="联系电话" width="120" />
-        <el-table-column prop="email" label="电子邮箱" width="180" />
-        <el-table-column prop="address" label="地址" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="createTime" label="创建时间" width="180" />
+        <el-table-column prop="payment_status" label="付款状态" width="120">
+          <template #default="{ row }">
+            <el-tag
+              :type="
+                row.payment_status === '已结清'
+                  ? 'success'
+                  : row.payment_status === '已付款部分'
+                    ? 'warning'
+                    : row.payment_status === '待付款'
+                      ? 'info'
+                      : 'default'
+              "
+              effect="light"
+            >
+              {{ row.payment_status }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="customer_source" label="客户来源" width="120" />
+        <el-table-column
+          prop="customer_address"
+          label="客户地址"
+          min-width="200"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="customer_detail"
+          label="客户详情"
+          min-width="120"
+          show-overflow-tooltip
+        />
+        <el-table-column prop="deal_price" label="成交金额" width="100" />
+        <el-table-column prop="creator_name" label="创建者" width="120" />
+        <el-table-column prop="create_time" label="创建时间" width="180">
+          <template #default="{ row }">
+            {{ row.create_time ? row.create_time.replace('T', ' ').replace(/\.\d+Z?$/, '') : '' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-switch
+              v-model="row.status"
+              :active-value="1"
+              :inactive-value="0"
+              @change="handleStatusChange(row)"
+            />
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button-group>
               <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
-              <el-button type="success" link @click="handleView(row)">查看</el-button>
               <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
             </el-button-group>
           </template>
@@ -94,7 +183,7 @@
           @current-change="handleCurrentChange"
         />
       </div>
-    </el-card>
+    </div>
 
     <!-- 新增/编辑客户对话框 -->
     <el-dialog
@@ -103,36 +192,52 @@
       width="600px"
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="客户名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入客户名称" />
+        <el-form-item label="客户名称" prop="customer_name">
+          <el-input v-model="form.customer_name" placeholder="请输入客户名称" />
         </el-form-item>
-        <el-form-item label="客户类型" prop="type">
-          <el-select v-model="form.type" placeholder="请选择客户类型">
-            <el-option label="个人" value="personal" />
-            <el-option label="企业" value="enterprise" />
+        <el-form-item label="客户状态" prop="customer_status">
+          <el-select v-model="form.customer_status" placeholder="请选择客户状态">
+            <el-option
+              v-for="item in customerStatusOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="客户等级" prop="level">
-          <el-select v-model="form.level" placeholder="请选择客户等级">
-            <el-option label="普通" value="normal" />
-            <el-option label="VIP" value="vip" />
-            <el-option label="钻石" value="diamond" />
+        <el-form-item label="客户级别" prop="customer_level">
+          <el-select v-model="form.customer_level" placeholder="请选择客户级别">
+            <el-option
+              v-for="item in customerLevelOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="联系人" prop="contact">
-          <el-input v-model="form.contact" placeholder="请输入联系人" />
+        <el-form-item label="付款状态" prop="payment_status">
+          <el-select v-model="form.payment_status" placeholder="请选择付款状态">
+            <el-option
+              v-for="item in paymentStatusOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item label="联系电话" prop="phone">
-          <el-input v-model="form.phone" placeholder="请输入联系电话" />
+        <el-form-item label="客户来源" prop="customer_source">
+          <el-input v-model="form.customer_source" placeholder="请输入客户来源" />
         </el-form-item>
-        <el-form-item label="电子邮箱" prop="email">
-          <el-input v-model="form.email" placeholder="请输入电子邮箱" />
+        <el-form-item label="客户地址" prop="customer_address">
+          <el-input v-model="form.customer_address" placeholder="请输入客户地址" />
         </el-form-item>
-        <el-form-item label="地址" prop="address">
-          <el-input v-model="form.address" type="textarea" :rows="2" placeholder="请输入地址" />
-        </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="请输入备注信息" />
+        <el-form-item label="客户详情" prop="customer_detail">
+          <el-input
+            v-model="form.customer_detail"
+            type="textarea"
+            :rows="2"
+            placeholder="请输入客户详情"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -142,97 +247,161 @@
         </span>
       </template>
     </el-dialog>
-  </div>
+
+    <!-- 客户详情对话框 -->
+    <el-dialog
+      v-model="detailDialogVisible"
+      title="客户详情"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <el-descriptions :column="1" border>
+        <el-descriptions-item label="客户名称">{{ detailData.customer_name }}</el-descriptions-item>
+        <el-descriptions-item label="客户状态">
+          <el-tag
+            :type="
+              detailData.customer_status === '成交客户'
+                ? 'warning'
+                : detailData.customer_status === '潜在客户'
+                  ? 'info'
+                  : detailData.customer_status === '战略合作'
+                    ? 'success'
+                    : detailData.customer_status === '无效客户'
+                      ? 'danger'
+                      : 'default'
+            "
+            effect="light"
+          >
+            {{ detailData.customer_status }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="客户级别">
+          <el-tag
+            :type="detailData.customer_level === '重要客户' ? 'danger' : 'success'"
+            effect="light"
+          >
+            {{ detailData.customer_level }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="付款状态">
+          <el-tag
+            :type="
+              detailData.payment_status === '已结清'
+                ? 'success'
+                : detailData.payment_status === '已付款部分'
+                  ? 'warning'
+                  : detailData.payment_status === '待付款'
+                    ? 'info'
+                    : 'default'
+            "
+            effect="light"
+          >
+            {{ detailData.payment_status }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="客户来源">{{
+          detailData.customer_source
+        }}</el-descriptions-item>
+        <el-descriptions-item label="客户地址">{{
+          detailData.customer_address
+        }}</el-descriptions-item>
+        <el-descriptions-item label="客户详情">{{
+          detailData.customer_detail
+        }}</el-descriptions-item>
+        <el-descriptions-item label="成交金额">{{ detailData.deal_price }}</el-descriptions-item>
+        <el-descriptions-item label="创建者">{{ detailData.creator_name }}</el-descriptions-item>
+        <el-descriptions-item label="创建时间">
+          {{
+            detailData.create_time
+              ? detailData.create_time.replace('T', ' ').replace(/\.\d+Z?$/, '')
+              : ''
+          }}
+        </el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <el-tag :type="detailData.status === 1 ? 'success' : 'info'">
+            {{ detailData.status === 1 ? '启用' : '禁用' }}
+          </el-tag>
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="detailDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+  </el-card>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { Search, Refresh, Plus, Download } from '@element-plus/icons-vue'
+import { ref, reactive, onMounted } from 'vue'
+import { Search, Refresh, Plus, Download, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
+import {
+  createCustomer,
+  getCustomerList,
+  updateCustomer,
+  deleteCustomer,
+  batchDeleteCustomers,
+  getCustomerCreators,
+} from '@/api/customer/customerlist'
 
 interface Customer {
-  id: number
-  name: string
-  type: string
-  level: string
-  contact: string
-  phone: string
-  email: string
-  address: string
-  createTime: string
-  remark?: string
+  customer_id: number
+  customer_name: string
+  customer_status: string
+  customer_level: string
+  payment_status: string
+  customer_source: string
+  customer_address: string
+  customer_detail: string
+  deal_price: number
+  status: number
+  creator: number
+  create_time: string
+  update_time: string
+  creator_name: string
 }
 
 // 搜索表单
 const searchForm = reactive({
   name: '',
-  type: '',
-  level: '',
-  phone: '',
+  status: '',
+  payment_status: '',
+  creator_id: undefined as number | undefined,
 })
 
 // 表格数据
 const loading = ref(false)
-const tableData = ref<Customer[]>([
-  {
-    id: 1,
-    name: '张三公司',
-    type: 'enterprise',
-    level: 'vip',
-    contact: '张三',
-    phone: '13800138000',
-    email: 'zhangsan@example.com',
-    address: '上海市浦东新区张江高科技园区',
-    createTime: '2024-03-20 10:30:00',
-  },
-  {
-    id: 2,
-    name: '李四',
-    type: 'personal',
-    level: 'normal',
-    contact: '李四',
-    phone: '13900139000',
-    email: 'lisi@example.com',
-    address: '北京市朝阳区建国路88号',
-    createTime: '2024-03-20 11:30:00',
-  },
-])
-
-// 分页
+const tableData = ref<Customer[]>([])
+const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
-const total = ref(100)
+const multipleSelection = ref<Customer[]>([])
 
 // 对话框相关
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
 const formRef = ref<FormInstance>()
 const form = reactive({
-  name: '',
-  type: '',
-  level: '',
-  contact: '',
-  phone: '',
-  email: '',
-  address: '',
-  remark: '',
+  customer_name: '',
+  customer_status: '',
+  customer_level: '',
+  payment_status: '',
+  customer_source: '',
+  customer_address: '',
+  customer_detail: '',
+  deal_price: 0,
+  status: 1,
+  creator: 1,
 })
 
 const rules = reactive<FormRules>({
-  name: [{ required: true, message: '请输入客户名称', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择客户类型', trigger: 'change' }],
-  level: [{ required: true, message: '请选择客户等级', trigger: 'change' }],
-  contact: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
-  phone: [
-    { required: true, message: '请输入联系电话', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' },
-  ],
-  email: [
-    { required: true, message: '请输入电子邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' },
-  ],
-  address: [{ required: true, message: '请输入地址', trigger: 'blur' }],
+  customer_name: [{ required: true, message: '请输入客户名称', trigger: 'blur' }],
+  customer_status: [{ required: true, message: '请选择客户状态', trigger: 'change' }],
+  customer_level: [{ required: true, message: '请选择客户级别', trigger: 'change' }],
+  payment_status: [{ required: true, message: '请选择付款状态', trigger: 'change' }],
+  customer_source: [{ required: true, message: '请输入客户来源', trigger: 'blur' }],
+  customer_address: [{ required: true, message: '请输入客户地址', trigger: 'blur' }],
+  customer_detail: [{ required: true, message: '请输入客户详情', trigger: 'blur' }],
 })
 
 // 获取等级标签
@@ -256,30 +425,34 @@ const getLevelLabel = (level: string) => {
 
 // 搜索
 const handleSearch = () => {
-  console.log('搜索条件：', searchForm)
-  // TODO: 实现搜索逻辑
+  currentPage.value = 1
+  fetchCustomers()
 }
 
 // 重置搜索
 const resetSearch = () => {
   searchForm.name = ''
-  searchForm.type = ''
-  searchForm.level = ''
-  searchForm.phone = ''
+  searchForm.status = ''
+  searchForm.payment_status = ''
+  searchForm.creator_id = undefined
   handleSearch()
 }
 
 // 新增客户
 const handleAdd = () => {
   dialogType.value = 'add'
-  form.name = ''
-  form.type = ''
-  form.level = ''
-  form.contact = ''
-  form.phone = ''
-  form.email = ''
-  form.address = ''
-  form.remark = ''
+  Object.assign(form, {
+    customer_name: '',
+    customer_status: '',
+    customer_level: '',
+    payment_status: '',
+    customer_source: '',
+    customer_address: '',
+    customer_detail: '',
+    deal_price: 0,
+    status: 1,
+    creator: 1, // 可根据实际登录用户ID赋值
+  })
   dialogVisible.value = true
 }
 
@@ -290,21 +463,16 @@ const handleEdit = (row: Customer) => {
   dialogVisible.value = true
 }
 
-// 查看客户
-const handleView = (row: Customer) => {
-  // TODO: 实现查看详情逻辑
-  console.log('查看客户：', row)
-}
-
 // 删除客户
 const handleDelete = (row: Customer) => {
-  ElMessageBox.confirm('确认删除该客户吗？', '提示', {
+  ElMessageBox.confirm(`确认删除客户【${row.customer_name}】吗？`, '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning',
-  }).then(() => {
-    // TODO: 实现删除逻辑
+  }).then(async () => {
+    await deleteCustomer(row.customer_id)
     ElMessage.success('删除成功')
+    fetchCustomers()
   })
 }
 
@@ -317,11 +485,17 @@ const handleExport = () => {
 // 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return
-  await formRef.value.validate((valid) => {
+  await formRef.value.validate(async (valid) => {
     if (valid) {
-      // TODO: 实现提交逻辑
-      ElMessage.success(dialogType.value === 'add' ? '新增成功' : '编辑成功')
+      if (dialogType.value === 'add') {
+        await createCustomer(form)
+        ElMessage.success('新增成功')
+      } else {
+        await updateCustomer(form.customer_id, form)
+        ElMessage.success('编辑成功')
+      }
       dialogVisible.value = false
+      fetchCustomers()
     }
   })
 }
@@ -329,19 +503,116 @@ const handleSubmit = async () => {
 // 分页大小变化
 const handleSizeChange = (val: number) => {
   pageSize.value = val
-  // TODO: 重新加载数据
+  fetchCustomers()
 }
 
 // 页码变化
 const handleCurrentChange = (val: number) => {
   currentPage.value = val
-  // TODO: 重新加载数据
+  fetchCustomers()
 }
+
+// 处理表格选择变化
+const handleSelectionChange = (val: Customer[]) => {
+  multipleSelection.value = val
+}
+
+const handleBatchDelete = async () => {
+  if (multipleSelection.value.length === 0) {
+    ElMessage.warning('请先选择要删除的客户')
+    return
+  }
+  const names = multipleSelection.value.map((item) => item.customer_name).join('，')
+  ElMessageBox.confirm(
+    `确认批量删除以下客户吗？<br><span style="color:#f56c6c">${names}</span>`,
+    '提示',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+      dangerouslyUseHTMLString: true,
+    },
+  ).then(async () => {
+    const ids = multipleSelection.value.map((item) => item.customer_id)
+    await batchDeleteCustomers(ids)
+    ElMessage.success('批量删除成功')
+    fetchCustomers()
+  })
+}
+
+const handleStatusChange = async (row) => {
+  await updateCustomer(row.customer_id, { status: row.status })
+  ElMessage.success('状态已更新')
+  fetchCustomers()
+}
+
+const fetchCustomers = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: currentPage.value,
+      limit: pageSize.value,
+      customer_name: searchForm.name || undefined,
+      customer_status: searchForm.status || undefined,
+      payment_status: searchForm.payment_status || undefined,
+      creator_id: searchForm.creator_id || undefined,
+    }
+    const res = await getCustomerList(params)
+    tableData.value = res.data?.list || []
+    total.value = res.data?.pagination?.total || 0
+  } finally {
+    loading.value = false
+  }
+}
+
+const customerStatusOptions = [
+  { label: '潜在客户', value: '潜在客户' },
+  { label: '成交客户', value: '成交客户' },
+  { label: '战略合作', value: '战略合作' },
+  { label: '无效客户', value: '无效客户' },
+]
+const customerLevelOptions = [
+  { label: '重要客户', value: '重要客户' },
+  { label: '一般客户', value: '一般客户' },
+]
+const paymentStatusOptions = [
+  { label: '待付款', value: '待付款' },
+  { label: '已付款部分', value: '已付款部分' },
+  { label: '已结清', value: '已结清' },
+]
+
+const creatorOptions = ref<{ user_id: number; username: string }[]>([])
+
+const detailDialogVisible = ref(false)
+const detailData = reactive<Partial<Customer>>({})
+
+const showDetail = (row: Customer) => {
+  Object.assign(detailData, row)
+  detailDialogVisible.value = true
+}
+
+onMounted(async () => {
+  await fetchCustomers()
+  const res = await getCustomerCreators()
+  creatorOptions.value = res.data || []
+})
 </script>
 
 <style scoped>
 .customer-list-container {
-  padding: 20px;
+  border-radius: 12px;
+}
+
+.customer-list-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.customer-list-title .title {
+  font-size: 18px;
+  font-weight: bold;
 }
 
 .search-card {

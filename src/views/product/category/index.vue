@@ -4,43 +4,36 @@
       <template #header>
         <div class="card-header">
           <span>商品分类管理</span>
-          <el-button type="primary" @click="handleAdd(null)">
+          <el-button type="primary" @click="handleAdd">
             <el-icon><Plus /></el-icon>
             新增分类
           </el-button>
         </div>
       </template>
 
-      <!-- 分类树形表格 -->
-      <el-table
-        v-loading="loading"
-        :data="tableData"
-        row-key="id"
-        border
-        default-expand-all
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-      >
-        <el-table-column prop="name" label="分类名称" min-width="200">
-          <template #default="{ row }">
-            <span>{{ row.name }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="code" label="分类编码" width="150" />
-        <el-table-column prop="sort" label="排序" width="100" />
+      <!-- 分类表格 -->
+      <el-table v-loading="loading" :data="tableData">
+        <el-table-column prop="category_name" label="分类名称" min-width="200" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'info'">
-              {{ row.status === 1 ? '启用' : '禁用' }}
-            </el-tag>
+            <el-switch
+              v-model="row.status"
+              :active-value="1"
+              :inactive-value="0"
+              @change="handleStatusChange(row)"
+            />
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column prop="create_time" label="创建时间" width="180">
+          <template #default="{ row }">
+            {{ dayjs(row.create_time).format('YYYY-MM-DD HH:mm:ss') }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button-group>
-              <el-button type="primary" link @click="handleAdd(row)"> 新增子分类 </el-button>
-              <el-button type="primary" link @click="handleEdit(row)"> 编辑 </el-button>
-              <el-button type="danger" link @click="handleDelete(row)"> 删除 </el-button>
+              <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
+              <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -54,29 +47,8 @@
       width="500px"
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="category-form">
-        <el-form-item label="上级分类">
-          <el-cascader
-            v-model="form.parentId"
-            :options="categoryOptions"
-            :props="{
-              checkStrictly: true,
-              value: 'id',
-              label: 'name',
-              children: 'children',
-              emitPath: false,
-            }"
-            clearable
-            placeholder="请选择上级分类"
-          />
-        </el-form-item>
-        <el-form-item label="分类名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入分类名称" />
-        </el-form-item>
-        <el-form-item label="分类编码" prop="code">
-          <el-input v-model="form.code" placeholder="请输入分类编码" />
-        </el-form-item>
-        <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="form.sort" :min="0" :max="999" />
+        <el-form-item label="分类名称" prop="category_name">
+          <el-input v-model="form.category_name" placeholder="请输入分类名称" />
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
@@ -100,101 +72,55 @@ import { ref, reactive, onMounted } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
+import {
+  createProductCategory,
+  getProductCategoryList,
+  updateProductCategory,
+  deleteProductCategory,
+} from '@/api/product/category'
+import dayjs from 'dayjs'
 
 // 表格数据
 const loading = ref(false)
-const tableData = ref([
-  {
-    id: 1,
-    name: '电子产品',
-    code: 'ELEC',
-    sort: 1,
-    status: 1,
-    createTime: '2024-01-01 12:00:00',
-    children: [
-      {
-        id: 11,
-        name: '手机',
-        code: 'ELEC-PHONE',
-        sort: 1,
-        status: 1,
-        createTime: '2024-01-01 12:00:00',
-      },
-      {
-        id: 12,
-        name: '电脑',
-        code: 'ELEC-PC',
-        sort: 2,
-        status: 1,
-        createTime: '2024-01-01 12:00:00',
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: '服装',
-    code: 'CLOTH',
-    sort: 2,
-    status: 1,
-    createTime: '2024-01-01 12:00:00',
-    children: [
-      {
-        id: 21,
-        name: '男装',
-        code: 'CLOTH-MEN',
-        sort: 1,
-        status: 1,
-        createTime: '2024-01-01 12:00:00',
-      },
-      {
-        id: 22,
-        name: '女装',
-        code: 'CLOTH-WOMEN',
-        sort: 2,
-        status: 1,
-        createTime: '2024-01-01 12:00:00',
-      },
-    ],
-  },
-])
+const tableData = ref([])
 
 // 表单相关
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
 const formRef = ref<FormInstance>()
 const form = reactive({
-  id: undefined as number | undefined,
-  parentId: undefined as number | undefined,
-  name: '',
-  code: '',
-  sort: 0,
+  category_id: undefined as number | undefined,
+  category_name: '',
   status: 1,
 })
 
 // 表单验证规则
 const rules = reactive<FormRules>({
-  name: [
+  category_name: [
     { required: true, message: '请输入分类名称', trigger: 'blur' },
     { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' },
   ],
-  code: [
-    { required: true, message: '请输入分类编码', trigger: 'blur' },
-    { pattern: /^[A-Z0-9-]+$/, message: '分类编码只能包含大写字母、数字和横杠', trigger: 'blur' },
-  ],
-  sort: [{ required: true, message: '请输入排序号', trigger: 'blur' }],
 })
 
-// 分类选项（用于级联选择器）
-const categoryOptions = ref(tableData.value)
+// 获取分类列表
+const fetchCategoryList = async () => {
+  loading.value = true
+  try {
+    const res = await getProductCategoryList()
+    tableData.value = res.data
+  } catch (error) {
+    console.error('获取分类列表失败:', error)
+    ElMessage.error('获取分类列表失败')
+  } finally {
+    loading.value = false
+  }
+}
 
 // 新增分类
-const handleAdd = (row: any) => {
+const handleAdd = () => {
   dialogType.value = 'add'
-  form.id = undefined
-  form.parentId = row?.id
-  form.name = ''
-  form.code = ''
-  form.sort = 0
+  form.category_id = undefined
+  form.category_name = ''
   form.status = 1
   dialogVisible.value = true
 }
@@ -202,62 +128,94 @@ const handleAdd = (row: any) => {
 // 编辑分类
 const handleEdit = (row: any) => {
   dialogType.value = 'edit'
-  form.id = row.id
-  form.parentId = row.parentId
-  form.name = row.name
-  form.code = row.code
-  form.sort = row.sort
+  form.category_id = row.category_id
+  form.category_name = row.category_name
   form.status = row.status
   dialogVisible.value = true
 }
 
 // 删除分类
 const handleDelete = (row: any) => {
-  ElMessageBox.confirm(
-    `确定要删除分类"${row.name}"吗？${row.children?.length ? '该分类下还有子分类，删除后将一并删除！' : ''}`,
-    '警告',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    },
-  ).then(() => {
-    // TODO: 实现删除逻辑
-    ElMessage.success('删除成功')
+  ElMessageBox.confirm(`确定要删除分类"${row.category_name}"吗？`, '警告', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(async () => {
+    try {
+      await deleteProductCategory(row.category_id)
+      ElMessage.success('删除成功')
+      fetchCategoryList()
+    } catch (error) {
+      console.error('删除分类失败:', error)
+      ElMessage.error('删除分类失败')
+    }
   })
 }
 
 // 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return
-  await formRef.value.validate((valid) => {
+  await formRef.value.validate(async (valid) => {
     if (valid) {
-      // TODO: 实现提交逻辑
-      ElMessage.success(dialogType.value === 'add' ? '新增成功' : '编辑成功')
-      dialogVisible.value = false
+      try {
+        if (dialogType.value === 'add') {
+          await createProductCategory({
+            category_name: form.category_name,
+            status: form.status,
+          })
+          ElMessage.success('新增成功')
+        } else {
+          await updateProductCategory(form.category_id!, {
+            category_name: form.category_name,
+            status: form.status,
+          })
+          ElMessage.success('编辑成功')
+        }
+        dialogVisible.value = false
+        fetchCategoryList()
+      } catch (error) {
+        console.error('保存分类失败:', error)
+        ElMessage.error('保存分类失败')
+      }
     }
   })
 }
 
+// 状态切换处理
+const handleStatusChange = async (row: { category_id: number; status: number }) => {
+  try {
+    await updateProductCategory(row.category_id, {
+      status: row.status,
+    })
+    ElMessage.success('状态更新成功')
+  } catch (error) {
+    console.error('状态更新失败:', error)
+    ElMessage.error('状态更新失败')
+    // 恢复原状态
+    row.status = row.status === 1 ? 0 : 1
+  }
+}
+
 // 初始化
 onMounted(() => {
-  // TODO: 加载分类数据
+  fetchCategoryList()
 })
 </script>
 
 <style scoped>
-.category-container {
-  padding: 20px;
-}
-
 .category-card {
   margin-bottom: 20px;
+  border-radius: 12px;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+.card-header span {
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .category-form {

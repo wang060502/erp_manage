@@ -4,9 +4,18 @@
       <div class="log-header-title">操作日志</div>
     </div>
     <!-- 操作类型说明 -->
-    <div class="explain-card" style="margin-bottom: 20px;">
-      <div style="font-weight: 600; font-size: 16px; color: #222; margin-bottom: 10px; display: flex; align-items: center;">
-        <el-icon style="font-size: 20px; color: #409EFF; margin-right: 6px;">
+    <div class="explain-card" style="margin-bottom: 20px">
+      <div
+        style="
+          font-weight: 600;
+          font-size: 16px;
+          color: #222;
+          margin-bottom: 10px;
+          display: flex;
+          align-items: center;
+        "
+      >
+        <el-icon style="font-size: 20px; color: #409eff; margin-right: 6px">
           <InfoFilled />
         </el-icon>
         操作类型说明
@@ -45,7 +54,7 @@
         v-model="autoRefresh"
         active-text="自动刷新"
         inactive-text="手动刷新"
-        style="margin-right: 16px;"
+        style="margin-right: 16px"
       />
       <el-button type="primary" @click="fetchLogs" :disabled="autoRefresh">
         <el-icon><Refresh /></el-icon>
@@ -53,16 +62,25 @@
       </el-button>
     </div>
     <!-- 自动清理提示 -->
-    <div style="margin-bottom: 16px; color: #909399; font-size: 14px; display: flex; align-items: center; gap: 6px;">
-      <el-icon style="font-size: 16px; color: #409EFF;"><InfoFilled /></el-icon>
+    <div
+      style="
+        margin-bottom: 16px;
+        color: #909399;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      "
+    >
+      <el-icon style="font-size: 16px; color: #409eff"><InfoFilled /></el-icon>
       日志每天凌晨 2 点自动清理，仅保留最近 7 天记录。
     </div>
 
     <!-- 日志列表 -->
     <div class="table-card">
-      <el-table v-loading="loading" :data="tableData"  style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" style="width: 100%">
         <template #empty>
-          <div>当前数据：{{ tableData }}</div>
+          <div>当前操作日志为空</div>
         </template>
         <el-table-column prop="id" label="日志编号" width="100" />
         <el-table-column prop="module" label="操作模块" min-width="120" />
@@ -266,14 +284,23 @@ const fetchLogs = async () => {
         operator: 'admin',
         description: logsDesc[idx] || '',
         status: 'success',
-        module: item.operation.includes('Role') ? '角色管理' :
-                item.operation.includes('Menu') ? '菜单管理' :
-                item.operation.includes('Dept') ? '部门管理' :
-                item.operation.includes('Log') ? '操作日志' :
-                item.operation.includes('Operation') ? '操作日志' :
-                item.operation.includes('OperationLog') ? '操作日志' :
-                item.operation.includes('OperationLog') ? '操作日志' :
-                item.operation.includes('User') ? '用户管理' : '其他',
+        module: item.operation.includes('Role')
+          ? '角色管理'
+          : item.operation.includes('Menu')
+            ? '菜单管理'
+            : item.operation.includes('Dept')
+              ? '部门管理'
+              : item.operation.includes('Log')
+                ? '操作日志'
+                : item.operation.includes('Operation')
+                  ? '操作日志'
+                  : item.operation.includes('OperationLog')
+                    ? '操作日志'
+                    : item.operation.includes('OperationLog')
+                      ? '操作日志'
+                      : item.operation.includes('User')
+                        ? '用户管理'
+                        : '其他',
         location: '-',
       } as TableLogItem
     })

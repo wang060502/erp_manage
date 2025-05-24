@@ -344,6 +344,7 @@ const fetchUsers = async () => {
       email: item.email,
       avatar: item.avatar,
       status: item.status,
+      remark: item.remark,
       deptId: item.dept_id,
       deptName: deptOptions.value.find((dept) => dept.id === item.dept_id)?.name || '',
       lastLoginTime: item.last_login_time ? formatDate(item.last_login_time) : '',
@@ -400,6 +401,7 @@ const handleEdit = (row: any) => {
   Object.assign(form, {
     ...row,
     status: Number(row.status),
+    remark: row.remark || '',
     roleId: row.roles && row.roles.length > 0 ? row.roles[0].role_id : undefined,
   })
   form.password = ''

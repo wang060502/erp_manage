@@ -186,10 +186,7 @@
           </el-icon>
           <el-breadcrumb separator="/">
             <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
-            <el-breadcrumb-item
-              v-for="(item, index) in breadcrumbs"
-              :key="item.path"
-            >
+            <el-breadcrumb-item v-for="(item, index) in breadcrumbs" :key="item.path">
               {{ item.title }}
             </el-breadcrumb-item>
           </el-breadcrumb>
@@ -202,16 +199,30 @@
           </el-tooltip>
           <el-dropdown>
             <span class="user-info">
-              <el-avatar
-                :size="32"
-                src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
-              />
-              <span class="username">管理员</span>
+              <el-avatar :size="32">
+                <template v-if="userProfile.avatar">
+                  <img :src="userProfile.avatar" />
+                </template>
+                <template v-else>
+                  <div class="avatar-pro avatar-text">
+                    {{
+                      userProfile.real_name
+                        ? userProfile.real_name.charAt(0)
+                        : userProfile.username
+                          ? userProfile.username.charAt(0)
+                          : ''
+                    }}
+                  </div>
+                </template>
+              </el-avatar>
+              <span class="username">{{
+                userProfile.real_name || userProfile.username || ''
+              }}</span>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item @click="handleUserInfo">个人信息</el-dropdown-item>
-                <el-dropdown-item>修改密码</el-dropdown-item>
+                <el-dropdown-item @click="handleUserInfo">修改密码</el-dropdown-item>
                 <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -232,7 +243,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   HomeFilled,
@@ -264,27 +275,35 @@ import {
   Close,
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
+import { getUserProfile } from '@/api/login/userinfo'
 
 const route = useRoute()
 const router = useRouter()
 const isCollapse = ref(false)
 const isFullscreen = ref(false)
 
+const userProfile = ref<{
+  user_id?: number
+  username?: string
+  real_name?: string
+  avatar?: string | null
+}>({})
+
 // 当前激活的菜单
 const activeMenu = computed(() => route.path)
 
 // 生成面包屑数据
 const breadcrumbs = computed(() => {
-  const matched = route.matched.filter(item => item.meta && item.meta.title)
+  const matched = route.matched.filter((item) => item.meta && item.meta.title)
   const first = matched[0]
 
   if (!first) {
     return []
   }
 
-  return matched.map(item => ({
+  return matched.map((item) => ({
     path: item.path,
-    title: item.meta.title
+    title: item.meta.title,
   }))
 })
 
@@ -319,9 +338,39 @@ const handleLogout = () => {
 const handleUserInfo = () => {
   router.push('/user/info')
 }
+
+onMounted(async () => {
+  const res = await getUserProfile()
+  userProfile.value = res
+})
 </script>
 
 <style scoped>
+.avatar-pro {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.avatar-pro {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
+  box-shadow: 0 2px 8px 0 #e0e7ef;
+  position: relative;
+  z-index: 2;
+}
+.avatar-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #2563eb;
+  background: #e0e7ef;
+}
+
 .app-wrapper {
   display: flex;
   height: 100vh;

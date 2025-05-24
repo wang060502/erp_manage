@@ -66,7 +66,6 @@
           </template>
         </el-table-column>
         <el-table-column prop="path" label="路由路径" min-width="180" />
-        <el-table-column prop="component" label="组件路径" min-width="180" />
         <el-table-column prop="permission" label="权限标识" min-width="180" />
         <el-table-column prop="sort" label="排序" width="80" />
         <el-table-column prop="visible" label="可见性" width="100">
@@ -345,7 +344,7 @@ const handleDelete = (row: any) => {
     cancelButtonText: '取消',
     type: 'warning',
   }).then(async () => {
-    await deleteMenu(row.menuId)
+    await deleteMenu(row.id)
     ElMessage.success('删除成功')
     fetchMenuList()
   })
@@ -393,7 +392,7 @@ function adaptMenuData(data: any[]): any[] {
 
 function onParentChange(val) {
   if (val === 0) {
-    form.parentId = undefined
+    form.parentId = 0
   }
 }
 
