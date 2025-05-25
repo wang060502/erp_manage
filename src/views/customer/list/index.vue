@@ -161,11 +161,12 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="260" fixed="right">
           <template #default="{ row }">
             <el-button-group>
               <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
               <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
+              <el-button type="info" link @click="showSalesRecord(row)">销售记录</el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -327,6 +328,148 @@
         <el-button @click="detailDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <!-- 销售记录弹窗 -->
+    <el-dialog v-model="salesRecordDialogVisible" title="产品销售记录" width="800px">
+      <div class="sales-record-header">
+        <div class="total-amount">
+          <span class="label">总销售金额：</span>
+          <span class="amount">${{ customerTotalAmount }}</span>
+        </div>
+        <el-button type="primary" @click="handleAddSalesRecord">新增销售记录</el-button>
+      </div>
+      <div v-for="(order, oIdx) in salesOrders" :key="oIdx" class="order-block">
+        <div class="order-header">
+          <span>销售时间：{{ dayjs(order.sales_time).format('YYYY-MM-DD HH:mm:ss') }}</span>
+          <span>总金额：${{ order.total_amount }}</span>
+          <span>创建人：{{ order.creator_name }}</span>
+        </div>
+        <el-table :data="order.products" size="small" class="order-products-table">
+          <el-table-column label="图片" width="60">
+            <template #default="{ row }">
+              <img :src="row.product_image" style="width:40px;height:40px;object-fit:cover;" />
+            </template>
+          </el-table-column>
+          <el-table-column prop="product_title" label="商品名称" min-width="120" />
+          <el-table-column prop="product_type" label="商品分类" width="80" />
+          <el-table-column prop="product_sku" label="SKU" width="120" />
+          <el-table-column prop="quantity" label="数量" width="60" />
+          <el-table-column prop="unit_price" label="单价" width="80" />
+          <el-table-column prop="total_price" label="总价" width="80" />
+          <el-table-column prop="remark" label="备注" min-width="120">
+            <template #default="{ row }">
+              <el-tooltip v-if="row.remark" :content="row.remark" placement="top" effect="dark">
+                <span style="display:inline-block;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                  {{ row.remark }}
+                </span>
+              </el-tooltip>
+              <span v-else style="color:#bbb;">-</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <el-pagination
+        v-model:current-page="salesRecordPage"
+        v-model:page-size="salesRecordLimit"
+        :total="salesRecordTotal"
+        :page-sizes="[5, 10, 20, 50]"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSalesRecordSizeChange"
+        @current-change="handleSalesRecordPageChange"
+        style="margin: 16px 0 0 0;"
+      />
+      <template #footer>
+        <el-button @click="handleCloseSalesRecord">关闭</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 新增销售记录弹窗 -->
+    <el-dialog v-model="addSalesRecordDialogVisible" title="新增产品销售记录" width="700px">
+      <el-form ref="addSalesRecordFormRef" :model="addSalesRecordForm" :rules="addSalesRecordRules" label-width="100px">
+        <el-form-item label="销售时间" prop="sales_time">
+          <el-date-picker v-model="addSalesRecordForm.sales_time" type="datetime" placeholder="选择销售时间" style="width: 100%;" />
+        </el-form-item>
+        <el-form-item label="产品明细" prop="products">
+          <div class="product-detail-list">
+            <div
+              v-for="(prod, idx) in addSalesRecordForm.products"
+              :key="idx"
+              class="product-detail-card"
+            >
+              <div class="product-card-toolbar">
+                <span class="product-index">{{ idx + 1 }}</span>
+                <div class="product-toolbar-actions">
+                  <el-button icon="Plus" @click="handleAddProductRow" circle type="success" size="small" />
+                  <el-button icon="Minus" @click="() => handleRemoveProductRow(idx)" circle type="danger" size="small" :disabled="addSalesRecordForm.products.length === 1" />
+                </div>
+              </div>
+              <div class="product-detail-fields">
+                <el-form-item label="商品名称" :required="true" class="product-form-item">
+                  <el-autocomplete
+                    v-model="prod.product_title"
+                    :fetch-suggestions="(q, cb) => querySearchProductName(q, cb)"
+                    placeholder="输入商品名"
+                    @select="val => handleProductNameSelect(val, idx)"
+                    class="product-input"
+                  >
+                    <template #default="{ item }">
+                      <div class="product-autocomplete-item">
+                        <img v-if="item.product_image" :src="item.product_image" class="product-img" />
+                        <div>
+                          <div class="product-title">{{ item.product_title }}</div>
+                          <div class="product-sku">SKU: {{ item.product_sku }}</div>
+                        </div>
+                      </div>
+                    </template>
+                  </el-autocomplete>
+                </el-form-item>
+                <el-form-item label="SKU" :required="true" class="product-form-item">
+                  <el-autocomplete
+                    v-model="prod.product_sku"
+                    :fetch-suggestions="(q, cb) => querySearchProductSku(q, cb)"
+                    placeholder="输入SKU"
+                    @select="val => handleProductSkuSelect(val, idx)"
+                    class="product-input"
+                  >
+                    <template #default="{ item }">
+                      <div class="product-autocomplete-item">
+                        <img v-if="item.product_image" :src="item.product_image" class="product-img" />
+                        <div>
+                          <div class="product-title">{{ item.product_title }}</div>
+                          <div class="product-sku">SKU: {{ item.product_sku }}</div>
+                        </div>
+                      </div>
+                    </template>
+                  </el-autocomplete>
+                </el-form-item>
+                <el-form-item label="数量" :required="true" class="product-form-item">
+                  <el-input v-model.number="prod.quantity" type="number" min="1" @input="() => calcTotalPrice(idx)" placeholder="数量" class="product-input" />
+                </el-form-item>
+                <el-form-item label="单价" :required="true" class="product-form-item">
+                  <el-input v-model.number="prod.unit_price" type="number" min="0" step="0.01" @input="() => calcTotalPrice(idx)" placeholder="单价" class="product-input" />
+                </el-form-item>
+                <el-form-item label="总价" class="product-form-item">
+                  <el-input v-model.number="prod.total_price" type="number" readonly placeholder="总价" class="product-input product-total" />
+                </el-form-item>
+                <el-form-item label="备注" class="product-form-item product-remark-item" style="width:100%;">
+                  <el-input
+                    v-model="prod.remark"
+                    type="textarea"
+                    :rows="2"
+                    placeholder="可填写本产品的特殊说明"
+                    class="product-input"
+                  />
+                </el-form-item>
+              </div>
+            </div>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="addSalesRecordDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmitAddSalesRecord">确定</el-button>
+      </template>
+    </el-dialog>
   </el-card>
 </template>
 
@@ -335,6 +478,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { Search, Refresh, Plus, Download, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
+import dayjs from 'dayjs'
 import {
   createCustomer,
   getCustomerList,
@@ -343,6 +487,8 @@ import {
   batchDeleteCustomers,
   getCustomerCreators,
 } from '@/api/customer/customerlist'
+import { getSalesRecordsByCustomer, addSalesRecord } from '@/api/customer/salesrecords'
+import { getProductList } from '@/api/product/list'
 
 interface Customer {
   customer_id: number
@@ -596,6 +742,209 @@ onMounted(async () => {
   const res = await getCustomerCreators()
   creatorOptions.value = res.data || []
 })
+
+// 销售记录弹窗相关
+const salesRecordDialogVisible = ref(false)
+const salesOrders = ref([])
+const salesRecordCustomerId = ref<number | null>(null)
+const salesRecordLoading = ref(false)
+const customerTotalAmount = ref('0.00')
+const salesRecordPage = ref(1)
+const salesRecordLimit = ref(5)
+const salesRecordTotal = ref(0)
+
+// 新增销售记录表单相关
+const addSalesRecordDialogVisible = ref(false)
+const addSalesRecordFormRef = ref<FormInstance>()
+const addSalesRecordForm = reactive({
+  sales_time: '',
+  creator: 1,
+  products: [
+    {
+      product_id: 0,
+      product_sku: '',
+      quantity: 1,
+      unit_price: 0,
+      total_price: 0,
+      remark: '',
+    },
+  ],
+})
+const addSalesRecordRules = reactive<FormRules>({
+  sales_time: [{ required: true, message: '请选择销售时间', trigger: 'change' }],
+  products: [{
+    validator: (rule, value, callback) => {
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        callback(new Error('请至少添加一个产品'))
+      } else {
+        for (const prod of value) {
+          if (!prod.product_id) return callback(new Error('请选择产品'))
+          if (!prod.product_sku) return callback(new Error('请输入SKU'))
+          if (!prod.quantity) return callback(new Error('请输入数量'))
+          if (!prod.unit_price) return callback(new Error('请输入单价'))
+          if (!prod.total_price) return callback(new Error('请输入总价'))
+        }
+        callback()
+      }
+    }, trigger: 'blur',
+  }],
+})
+
+// 产品选择相关
+interface Product {
+  product_id: number;
+  product_title: string;
+  product_sku: string;
+  product_image?: string;
+}
+
+const querySearchProductName = async (queryString, cb) => {
+  const res = await getProductList({ product_title: queryString, page: 1, page_size: 20 });
+  cb((res.data?.list || []).map(item => ({
+    product_id: item.product_id,
+    product_title: item.product_title,
+    product_sku: item.product_sku,
+    product_image: item.product_image,
+  })));
+};
+
+const querySearchProductSku = async (queryString, cb) => {
+  const res = await getProductList({ product_sku: queryString, page: 1, page_size: 20 });
+  cb((res.data?.list || []).map(item => ({
+    product_id: item.product_id,
+    product_title: item.product_title,
+    product_sku: item.product_sku,
+    product_image: item.product_image,
+  })));
+};
+
+const handleProductNameSelect = (item, idx) => {
+  const prod = addSalesRecordForm.products[idx];
+  prod.product_id = item.product_id;
+  prod.product_title = item.product_title;
+  prod.product_sku = item.product_sku;
+  prod.product_image = item.product_image;
+};
+
+const handleProductSkuSelect = (item, idx) => {
+  const prod = addSalesRecordForm.products[idx];
+  prod.product_id = item.product_id;
+  prod.product_title = item.product_title;
+  prod.product_sku = item.product_sku;
+  prod.product_image = item.product_image;
+};
+
+const handleAddProductRow = () => {
+  addSalesRecordForm.products.push({
+    product_id: 0,
+    product_sku: '',
+    quantity: 1,
+    unit_price: 0,
+    total_price: 0,
+    remark: '',
+  })
+}
+const handleRemoveProductRow = (idx: number) => {
+  if (addSalesRecordForm.products.length > 1) {
+    addSalesRecordForm.products.splice(idx, 1)
+  }
+}
+
+const calcTotalPrice = (idx: number) => {
+  const prod = addSalesRecordForm.products[idx]
+  prod.total_price = Number(prod.quantity) * Number(prod.unit_price)
+}
+
+const handleAddSalesRecord = () => {
+  if (!salesRecordCustomerId.value) return
+  Object.assign(addSalesRecordForm, {
+    sales_time: '',
+    creator: 1,
+    products: [
+      {
+        product_id: 0,
+        product_sku: '',
+        quantity: 1,
+        unit_price: 0,
+        total_price: 0,
+        remark: '',
+      },
+    ],
+  })
+  addSalesRecordDialogVisible.value = true
+}
+
+const handleSubmitAddSalesRecord = async () => {
+  if (!addSalesRecordFormRef.value) return
+  await addSalesRecordFormRef.value.validate(async (valid) => {
+    if (valid && salesRecordCustomerId.value) {
+      await addSalesRecord({
+        customer_id: salesRecordCustomerId.value,
+        products: addSalesRecordForm.products.map(p => ({
+          product_id: p.product_id,
+          product_sku: p.product_sku,
+          quantity: p.quantity,
+          unit_price: p.unit_price,
+          total_price: p.total_price,
+          remark: p.remark,
+        })),
+        sales_time: addSalesRecordForm.sales_time,
+        creator: addSalesRecordForm.creator,
+      })
+      ElMessage.success('新增销售记录成功')
+      addSalesRecordDialogVisible.value = false
+      await fetchSalesRecords(salesRecordCustomerId.value)
+    }
+  })
+}
+
+const showSalesRecord = async (row: Customer) => {
+  salesRecordCustomerId.value = row.customer_id
+  salesRecordPage.value = 1
+  salesRecordDialogVisible.value = true
+  await fetchSalesRecords(row.customer_id)
+}
+
+const fetchSalesRecords = async (customerId: number) => {
+  salesRecordLoading.value = true
+  try {
+    const res = await getSalesRecordsByCustomer({
+      customerId,
+      page: salesRecordPage.value,
+      limit: salesRecordLimit.value,
+    })
+    salesOrders.value = res.orders || []
+    customerTotalAmount.value = res.customer_total_amount || '0.00'
+    salesRecordTotal.value = res.pagination?.total || 0
+  } finally {
+    salesRecordLoading.value = false
+  }
+}
+
+const handleCloseSalesRecord = () => {
+  salesRecordDialogVisible.value = false
+  fetchCustomers()
+}
+
+// 分页切换
+const handleSalesRecordPageChange = (page: number) => {
+  salesRecordPage.value = page
+  if (salesRecordCustomerId.value) {
+    fetchSalesRecords(salesRecordCustomerId.value)
+  }
+}
+const handleSalesRecordSizeChange = (size: number) => {
+  salesRecordLimit.value = size
+  salesRecordPage.value = 1
+  if (salesRecordCustomerId.value) {
+    fetchSalesRecords(salesRecordCustomerId.value)
+  }
+}
+
+function formatDate(dateStr: string) {
+  if (!dateStr) return '';
+  return dateStr.replace('T', ' ').replace(/\\.\\d+Z?$/, '');
+}
 </script>
 
 <style scoped>
@@ -645,5 +994,155 @@ onMounted(async () => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.product-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.product-detail-card {
+  background: #fff;
+  border-bottom:1px dashed #979899;
+  padding: 32px 24px 12px 24px;
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.product-card-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 95%;
+  padding: 10px 16px 0 16px;
+  z-index: 2;
+}
+.product-toolbar-actions {
+  display: flex;
+  gap: 8px;
+}
+.product-index {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: #e6f0fa;
+  color: #409eff;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: bold;
+  box-shadow: 0 1px 4px rgba(64,158,255,0.08);
+  margin-right: 4px;
+}
+.el-button {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  transition: box-shadow 0.2s;
+}
+.el-button:hover {
+  box-shadow: 0 2px 8px rgba(64,158,255,0.18);
+}
+.product-detail-fields {
+  flex: 1;
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 24px;
+}
+.product-form-item {
+  min-width: 180px;
+  flex: 1 1 180px;
+  margin-bottom: 0 !important;
+}
+.product-input {
+  width: 100%;
+}
+.product-total input {
+  background: #f5f7fa !important;
+  color: #222;
+  font-weight: bold;
+}
+.product-autocomplete-item {
+  display: flex;
+  align-items: center;
+}
+.product-img {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  margin-right: 8px;
+  border-radius: 4px;
+}
+.product-title {
+  font-weight: 500;
+}
+.product-sku {
+  font-size: 12px;
+  color: #888;
+}
+@media (max-width: 600px) {
+  .product-detail-card {
+    flex-direction: column;
+    padding: 32px 8px 12px 8px;
+  }
+  .product-card-toolbar {
+    left: 0;
+    top: 0;
+    padding: 8px 8px 0 8px;
+  }
+}
+.order-block {
+  margin-bottom: 24px;
+  background: #f8fafd;
+  border-radius: 8px;
+  padding: 12px 8px 8px 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.order-header {
+  display: flex;
+  gap: 32px;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.order-products-table {
+  background: #fff;
+  border-radius: 6px;
+}
+.product-remark-item {
+  flex-basis: 100%;
+  min-width: 0;
+  margin-top: 8px;
+}
+
+.sales-record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 0 4px;
+}
+
+.total-amount {
+  font-size: 16px;
+  color: #333;
+}
+
+.total-amount .label {
+  color: #666;
+  margin-right: 8px;
+}
+
+.total-amount .amount {
+  font-size: 20px;
+  font-weight: bold;
+  color: #f56c6c;
 }
 </style>

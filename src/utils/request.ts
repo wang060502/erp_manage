@@ -115,7 +115,7 @@ instance.interceptors.response.use(
           message = '服务器内部错误'
           break
         default:
-          message = `请求失败: ${error.response.status}`
+          message = `请求失败: ${error.response.data.error || error.response.data.message || error.response.status}`
       }
     } else if (error.request) {
       // 发出了请求但没有收到响应

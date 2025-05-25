@@ -4,10 +4,10 @@
     <div class="product-list-container-header">
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="商品名称">
-          <el-input v-model="searchForm.product_title" placeholder="请输入商品名称" clearable />
+          <el-input v-model.trim="searchForm.product_title"  placeholder="请输入商品名称" clearable />
         </el-form-item>
         <el-form-item label="商品SKU">
-          <el-input v-model="searchForm.product_sku" placeholder="请输入商品SKU" clearable />
+          <el-input v-model.trim="searchForm.product_sku" placeholder="请输入商品SKU" clearable />
         </el-form-item>
         <el-form-item label="商品分类" style="width: 200px">
           <el-select v-model="searchForm.category_id" placeholder="请选择分类" clearable>
@@ -125,10 +125,10 @@
     <el-dialog v-model="dialogVisible" title="商品信息" width="30%" :before-close="handleClose">
       <el-form :model="form" :rules="rules" ref="formRef" label-position="left" label-width="100px">
         <el-form-item label="商品名称" prop="product_title">
-          <el-input v-model="form.product_title" />
+          <el-input v-model.trim="form.product_title" />
         </el-form-item>
         <el-form-item label="商品SKU" prop="product_sku">
-          <el-input v-model="form.product_sku" />
+          <el-input v-model.trim="form.product_sku" />
         </el-form-item>
         <el-form-item label="类型代码" prop="type_code">
           <el-input v-model="form.type_code" disabled placeholder="自动生成" />
@@ -213,7 +213,10 @@
           <p>{{ currentProduct.remark || '暂无备注' }}</p>
           <h4>时间信息</h4>
           <p>创建时间: {{ dayjs(currentProduct.create_time).format('YYYY-MM-DD HH:mm:ss') }}</p>
-          <p>更新时间: {{ dayjs(currentProduct.update_time).format('YYYY-MM-DD HH:mm:ss') }}</p>
+          <p v-if="currentProduct.update_time">
+            更新时间: {{ dayjs(currentProduct.update_time).format('YYYY-MM-DD HH:mm:ss') }}
+          </p>
+          <p v-if="!currentProduct.update_time">更新时间: 暂未更新</p>
         </div>
       </div>
     </el-dialog>
