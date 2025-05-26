@@ -36,9 +36,9 @@
             <el-icon><Files /></el-icon>
             <span>商品分类</span>
           </el-menu-item>
-          <el-menu-item index="/product/price">
-            <el-icon><Money /></el-icon>
-            <span>价格管理</span>
+          <el-menu-item index="/product/statistics">
+            <el-icon><TrendCharts /></el-icon>
+            <span>商品统计</span>
           </el-menu-item>
         </el-sub-menu>
 
@@ -95,10 +95,6 @@
           <el-menu-item index="/customer/list">
             <el-icon><List /></el-icon>
             <span>客户列表</span>
-          </el-menu-item>
-          <el-menu-item index="/customer/category">
-            <el-icon><Files /></el-icon>
-            <span>客户分类</span>
           </el-menu-item>
           <el-menu-item index="/customer/analysis">
             <el-icon><DataLine /></el-icon>

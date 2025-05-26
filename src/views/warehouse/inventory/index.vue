@@ -1,9 +1,7 @@
 <template>
   <el-card class="inventory-container">
     <div class="inventory-container-title">
-      <div class="title">
-        库存管理
-      </div>
+      <div class="title">库存管理</div>
     </div>
     <!-- 搜索栏 -->
     <div class="search-card">
@@ -14,9 +12,14 @@
         <el-form-item label="产品SKU">
           <el-input v-model="searchForm.product_sku" placeholder="请输入产品SKU" clearable />
         </el-form-item>
-        <el-form-item label="仓库" style="width: 200px;">
+        <el-form-item label="仓库" style="width: 200px">
           <el-select v-model="searchForm.warehouse_id" placeholder="请选择仓库" clearable>
-            <el-option v-for="item in warehouseOptions" :key="item.id" :label="item.name" :value="item.id" />
+            <el-option
+              v-for="item in warehouseOptions"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -43,11 +46,25 @@
     <!-- 库存列表卡片分组 -->
     <div class="table-card">
       <div class="inventory-card-list">
-        <el-card v-for="prod in tableData" :key="prod.product_id" class="inventory-product-card" shadow="hover">
+        <el-card
+          v-for="prod in tableData"
+          :key="prod.product_id"
+          class="inventory-product-card"
+          shadow="hover"
+        >
           <div class="inventory-product-header">
-            <el-image v-if="prod.product_image" :src="prod.product_image" class="inventory-product-image" fit="cover" />
+            <el-image
+              v-if="prod.product_image"
+              :src="prod.product_image"
+              class="inventory-product-image"
+              fit="cover"
+            />
             <div class="inventory-product-info">
-              <div class="inventory-product-title" @click="openDetailDialog(prod)" style="cursor:pointer;color:#409eff;">
+              <div
+                class="inventory-product-title"
+                @click="openDetailDialog(prod)"
+                style="cursor: pointer; color: #409eff"
+              >
                 {{ prod.product_name }}
               </div>
               <div class="inventory-product-sku">SKU: {{ prod.product_sku }}</div>
@@ -55,33 +72,47 @@
             <div class="card-actions">
               <button class="icon-btn" @click="openBatchEditDialog(prod)" title="批量编辑">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M4 13.5V16h2.5l7.06-7.06-2.5-2.5L4 13.5z" fill="#409EFF"/>
-                  <path d="M14.06 6.44a1.5 1.5 0 0 0 0-2.12l-1.38-1.38a1.5 1.5 0 0 0-2.12 0l-1.06 1.06 3.5 3.5 1.06-1.06z" fill="#409EFF"/>
+                  <path d="M4 13.5V16h2.5l7.06-7.06-2.5-2.5L4 13.5z" fill="#409EFF" />
+                  <path
+                    d="M14.06 6.44a1.5 1.5 0 0 0 0-2.12l-1.38-1.38a1.5 1.5 0 0 0-2.12 0l-1.06 1.06 3.5 3.5 1.06-1.06z"
+                    fill="#409EFF"
+                  />
                 </svg>
               </button>
-              <button class="icon-btn" @click="handleDeleteProductWarehouse(prod.product_id, prod.product_name)" title="删除">
+              <button
+                class="icon-btn"
+                @click="handleDeleteProductWarehouse(prod.product_id, prod.product_name)"
+                title="删除"
+              >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <circle cx="10" cy="10" r="10" fill="#F56C6C"/>
-                  <path d="M7 7l6 6M13 7l-6 6" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                  <circle cx="10" cy="10" r="10" fill="#F56C6C" />
+                  <path
+                    d="M7 7l6 6M13 7l-6 6"
+                    stroke="#fff"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
                 </svg>
               </button>
             </div>
           </div>
-          <el-table :data="prod.warehouses" class="inventory-warehouse-table" size="small" border>
+          <el-table :data="prod.warehouses" class="inventory-warehouse-table" size="small">
             <el-table-column prop="warehouse_name" label="仓库" min-width="120" />
             <el-table-column label="尺码/库存">
-          <template #default="{ row }">
+              <template #default="{ row }">
                 <div class="inventory-size-list">
                   <span v-for="stock in row.stocks" :key="stock.id" class="inventory-size-item">
                     <span class="size">{{ stock.product_size }}</span>
                     <span class="qty">{{ stock.stock_quantity }}</span>
                   </span>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
         </el-card>
-        <div v-if="!tableData.length" style="color:#aaa;text-align:center;margin:30px 0;">暂无库存数据</div>
+        <div v-if="!tableData.length" style="color: #aaa; text-align: center; margin: 30px 0">
+          暂无库存数据
+        </div>
       </div>
       <div class="pagination-container">
         <el-pagination
@@ -93,7 +124,7 @@
           @current-change="handlePageChange"
           @size-change="handleSizeChange"
           :page-sizes="[10, 20, 50, 100]"
-          style="margin-top: 16px;"
+          style="margin-top: 16px"
         />
       </div>
     </div>
@@ -102,65 +133,155 @@
     <el-dialog v-model="addDialogVisible" title="新增库存" width="800px">
       <!-- 产品自动完成选择区 -->
       <div class="product-search-bar">
-        <ProductAutoComplete v-model="selectedProduct" placeholder="请输入产品名称或SKU" @select="handleProductSelect" />
+        <ProductAutoComplete
+          v-model="selectedProduct"
+          placeholder="请输入产品名称或SKU"
+          @select="handleProductSelect"
+        />
       </div>
       <!-- 产品卡片区 -->
       <div class="product-card-list">
-        <el-card v-for="(card, cardIdx) in productCards" :key="card.product.product_id" class="product-card" shadow="hover">
+        <el-card
+          v-for="(card, cardIdx) in productCards"
+          :key="card.product.product_id"
+          class="product-card"
+          shadow="hover"
+        >
           <div class="card-header-flex">
             <div class="product-info-flex">
-              <el-image v-if="card.product.product_image" :src="card.product.product_image" class="product-image-thumb" fit="cover" />
+              <el-image
+                v-if="card.product.product_image"
+                :src="card.product.product_image"
+                class="product-image-thumb"
+                fit="cover"
+              />
               <div>
                 <div class="product-title">{{ card.product.product_title }}</div>
                 <div class="product-sku">SKU: {{ card.product.product_sku }}</div>
               </div>
             </div>
             <div class="card-actions">
-          <el-select
+              <el-select
                 v-model="card.selectedWarehouseId"
                 placeholder="卡片统一选择仓库"
                 clearable
                 class="card-warehouse-select"
                 @change="(val: number | null) => handleCardWarehouseChange(cardIdx, val)"
-          >
-                <el-option v-for="w in warehouseOptions" :key="w.id" :label="w.name" :value="w.id" />
-          </el-select>
-              <button class="icon-btn card-delete-btn" @click="removeProductCard(cardIdx)" title="删除卡片">
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="11" fill="#F56C6C"/><path d="M7.5 7.5L14.5 14.5M14.5 7.5L7.5 14.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+              >
+                <el-option
+                  v-for="w in warehouseOptions"
+                  :key="w.id"
+                  :label="w.name"
+                  :value="w.id"
+                />
+              </el-select>
+              <button
+                class="icon-btn card-delete-btn"
+                @click="removeProductCard(cardIdx)"
+                title="删除卡片"
+              >
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                  <circle cx="11" cy="11" r="11" fill="#F56C6C" />
+                  <path
+                    d="M7.5 7.5L14.5 14.5M14.5 7.5L7.5 14.5"
+                    stroke="#fff"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                </svg>
               </button>
             </div>
           </div>
           <div class="card-details-flex">
-            <el-row v-for="(detail, idx) in card.details" :key="idx" :gutter="12" class="detail-row-flex">
+            <el-row
+              v-for="(detail, idx) in card.details"
+              :key="idx"
+              :gutter="12"
+              class="detail-row-flex"
+            >
               <el-col :span="6">
-                <el-form-item :prop="`cards.${cardIdx}.details.${idx}.product_size`" label="尺码"  class="form-item-flex">
+                <el-form-item
+                  :prop="`cards.${cardIdx}.details.${idx}.product_size`"
+                  label="尺码"
+                  class="form-item-flex"
+                >
                   <el-input v-model="detail.product_size" placeholder="尺码" class="input-flex" />
-        </el-form-item>
+                </el-form-item>
               </el-col>
               <el-col :span="6">
-                <el-form-item :prop="`cards.${cardIdx}.details.${idx}.stock_quantity`" label="数量"  class="form-item-flex">
-                  <el-input-number v-model.number="detail.stock_quantity" :min="0" placeholder="数量" class="input-flex" />
-        </el-form-item>
+                <el-form-item
+                  :prop="`cards.${cardIdx}.details.${idx}.stock_quantity`"
+                  label="数量"
+                  class="form-item-flex"
+                >
+                  <el-input-number
+                    v-model.number="detail.stock_quantity"
+                    :min="0"
+                    placeholder="数量"
+                    class="input-flex"
+                  />
+                </el-form-item>
               </el-col>
               <el-col :span="8">
-                <el-form-item :prop="`cards.${cardIdx}.details.${idx}.warehouse_id`" label="仓库ID"  class="form-item-flex">
-                  <el-select v-model.number="detail.warehouse_id" placeholder="请选择仓库" :disabled="!!card.selectedWarehouseId" class="input-flex">
-                    <el-option v-for="w in warehouseOptions" :key="w.id" :label="w.name" :value="w.id" />
-          </el-select>
-        </el-form-item>
+                <el-form-item
+                  :prop="`cards.${cardIdx}.details.${idx}.warehouse_id`"
+                  label="仓库ID"
+                  class="form-item-flex"
+                >
+                  <el-select
+                    v-model.number="detail.warehouse_id"
+                    placeholder="请选择仓库"
+                    :disabled="!!card.selectedWarehouseId"
+                    class="input-flex"
+                  >
+                    <el-option
+                      v-for="w in warehouseOptions"
+                      :key="w.id"
+                      :label="w.name"
+                      :value="w.id"
+                    />
+                  </el-select>
+                </el-form-item>
               </el-col>
               <el-col :span="2" class="detail-row-btn-col">
-                <button class="icon-btn detail-row-add-btn" @click="addDetailRow(cardIdx)" title="新增一行">
-                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="11" fill="#409EFF"/><path d="M11 7V15M7 11H15" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+                <button
+                  class="icon-btn detail-row-add-btn"
+                  @click="addDetailRow(cardIdx)"
+                  title="新增一行"
+                >
+                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                    <circle cx="11" cy="11" r="11" fill="#409EFF" />
+                    <path
+                      d="M11 7V15M7 11H15"
+                      stroke="#fff"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    />
+                  </svg>
                 </button>
-                <button v-if="card.details.length > 1" class="icon-btn detail-row-delete-btn" @click="removeDetailRow(cardIdx, idx)" title="删除本行">
-                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="11" fill="#F56C6C"/><path d="M7.5 7.5L14.5 14.5M14.5 7.5L7.5 14.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+                <button
+                  v-if="card.details.length > 1"
+                  class="icon-btn detail-row-delete-btn"
+                  @click="removeDetailRow(cardIdx, idx)"
+                  title="删除本行"
+                >
+                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                    <circle cx="11" cy="11" r="11" fill="#F56C6C" />
+                    <path
+                      d="M7.5 7.5L14.5 14.5M14.5 7.5L7.5 14.5"
+                      stroke="#fff"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    />
+                  </svg>
                 </button>
               </el-col>
             </el-row>
           </div>
         </el-card>
-        <div v-if="!productCards.length" style="color:#aaa;text-align:center;margin:30px 0;">请先搜索并选择产品</div>
+        <div v-if="!productCards.length" style="color: #aaa; text-align: center; margin: 30px 0">
+          请先搜索并选择产品
+        </div>
       </div>
       <template #footer>
         <span class="dialog-footer">
@@ -173,14 +294,19 @@
     <!-- 批量编辑弹窗 -->
     <el-dialog v-model="batchEditDialogVisible" title="批量编辑库存" width="800px">
       <div v-if="currentBatchProduct" class="batch-edit-header">
-        <el-image v-if="currentBatchProduct.product_image" :src="currentBatchProduct.product_image" class="product-image-thumb" fit="cover" />
+        <el-image
+          v-if="currentBatchProduct.product_image"
+          :src="currentBatchProduct.product_image"
+          class="product-image-thumb"
+          fit="cover"
+        />
         <div class="batch-edit-product-info">
           <div class="product-title">{{ currentBatchProduct.product_name }}</div>
           <div class="product-sku">SKU: {{ currentBatchProduct.product_sku }}</div>
         </div>
       </div>
       <!-- 新增按钮 -->
-      <div style="margin-top: 20px; text-align: right;">
+      <div style="margin-top: 20px; text-align: right">
         <el-button type="primary" @click="openAddBatchEditItemDialog">新增</el-button>
       </div>
       <el-table :data="batchEditItems" border style="margin-top: 20px">
@@ -188,12 +314,20 @@
         <el-table-column prop="product_size" label="尺码" min-width="100" />
         <el-table-column label="库存数量" min-width="150">
           <template #default="{ row }">
-            <el-input-number v-model="row.stock_quantity" :min="0" :precision="0" size="small" @change="handleStockQuantityChange(row)" />
+            <el-input-number
+              v-model="row.stock_quantity"
+              :min="0"
+              :precision="0"
+              size="small"
+              @change="handleStockQuantityChange(row)"
+            />
           </template>
         </el-table-column>
         <el-table-column label="操作" min-width="100">
           <template #default="{ $index }">
-            <el-button type="danger" size="small" @click="removeBatchEditItem($index)">删除</el-button>
+            <el-button type="danger" size="small" @click="removeBatchEditItem($index)"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -209,7 +343,11 @@
     <el-dialog v-model="addBatchEditItemDialogVisible" title="新增库存项" width="500px">
       <el-form :model="newBatchEditItem" label-width="100px">
         <el-form-item label="仓库">
-          <el-select v-model="newBatchEditItem.warehouse_id" placeholder="请选择仓库" style="width: 100%;">
+          <el-select
+            v-model="newBatchEditItem.warehouse_id"
+            placeholder="请选择仓库"
+            style="width: 100%"
+          >
             <el-option v-for="w in warehouseOptions" :key="w.id" :label="w.name" :value="w.id" />
           </el-select>
         </el-form-item>
@@ -217,7 +355,12 @@
           <el-input v-model="newBatchEditItem.product_size" placeholder="请输入尺码" />
         </el-form-item>
         <el-form-item label="库存数量">
-          <el-input-number v-model.number="newBatchEditItem.stock_quantity" :min="0" :precision="0" style="width: 100%;" />
+          <el-input-number
+            v-model.number="newBatchEditItem.stock_quantity"
+            :min="0"
+            :precision="0"
+            style="width: 100%"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -229,13 +372,31 @@
     </el-dialog>
 
     <!-- 新增库存详情弹窗 -->
-    <el-dialog v-model="detailDialogVisible" :title="detailProduct?.product_name || '库存详情'" width="600px">
+    <el-dialog
+      v-model="detailDialogVisible"
+      :title="detailProduct?.product_name || '库存详情'"
+      width="600px"
+    >
       <div v-if="detailProduct">
-        <div style="display: flex; align-items: center; gap: 18px; margin-bottom: 10px;">
-          <el-image v-if="detailProduct.product_image" :src="detailProduct.product_image" style="width:48px;height:48px;border-radius:8px;object-fit:cover;background:#f5f7fa;box-shadow:0 2px 8px #0001;" fit="cover" />
+        <div style="display: flex; align-items: center; gap: 18px; margin-bottom: 10px">
+          <el-image
+            v-if="detailProduct.product_image"
+            :src="detailProduct.product_image"
+            style="
+              width: 48px;
+              height: 48px;
+              border-radius: 8px;
+              object-fit: cover;
+              background: #f5f7fa;
+              box-shadow: 0 2px 8px #0001;
+            "
+            fit="cover"
+          />
           <div>
-            <div style="font-weight:bold;font-size:18px;color:#222;">{{ detailProduct.product_name }}</div>
-            <div style="color:#888;">SKU: {{ detailProduct.product_sku }}</div>
+            <div style="font-weight: bold; font-size: 18px; color: #222">
+              {{ detailProduct.product_name }}
+            </div>
+            <div style="color: #888">SKU: {{ detailProduct.product_sku }}</div>
           </div>
         </div>
         <el-table :data="detailProduct.warehouses" border>
@@ -263,27 +424,32 @@
 import { ref, reactive, onMounted } from 'vue'
 import { Search, Refresh, Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { addProductWarehouseRecords, getProductWarehouseList, updateProductWarehouseRecords, deleteProductWarehouseRecord } from '@/api/warehouse/inventory'
+import {
+  addProductWarehouseRecords,
+  getProductWarehouseList,
+  updateProductWarehouseRecords,
+  deleteProductWarehouseRecord,
+} from '@/api/warehouse/inventory'
 import ProductAutoComplete from '@/components/ProductAutoComplete.vue'
 import { getWarehouseList } from '@/api/warehouse/list'
 
 // 定义类型
 interface ProductWarehouse {
-  warehouse_id: number;
-  warehouse_name: string;
+  warehouse_id: number
+  warehouse_name: string
   stocks: Array<{
-    id: number;
-    product_size: string;
-    stock_quantity: number;
-  }>;
+    id: number
+    product_size: string
+    stock_quantity: number
+  }>
 }
 
 interface Product {
-  product_id: number;
-  product_name: string;
-  product_sku: string;
-  product_image?: string;
-  warehouses: ProductWarehouse[];
+  product_id: number
+  product_name: string
+  product_sku: string
+  product_image?: string
+  warehouses: ProductWarehouse[]
 }
 
 // 搜索表单
@@ -306,11 +472,17 @@ const warehouseOptions = ref<{ id: number; name: string }[]>([])
 const fetchWarehouses = async () => {
   const res = await getWarehouseList({ page: 1, limit: 1000 })
   // 兼容多种返回结构
-  const list = (res as unknown as Record<string, unknown>).warehouses || res.data?.warehouses || res.data?.list || []
-  warehouseOptions.value = (list as Array<{ warehouse_id: number; warehouse_name: string }>).map(w => ({
-    id: w.warehouse_id,
-    name: w.warehouse_name
-  }))
+  const list =
+    (res as unknown as Record<string, unknown>).warehouses ||
+    res.data?.warehouses ||
+    res.data?.list ||
+    []
+  warehouseOptions.value = (list as Array<{ warehouse_id: number; warehouse_name: string }>).map(
+    (w) => ({
+      id: w.warehouse_id,
+      name: w.warehouse_name,
+    }),
+  )
 }
 
 // 新增弹窗
@@ -321,11 +493,11 @@ const productCards = ref<ProductCard[]>([])
 const handleProductSelect = (prod: ProductSearchResult) => {
   if (!prod) return
   // 已存在则不重复添加
-  if (productCards.value.some(card => card.product.product_id === prod.product_id)) return
+  if (productCards.value.some((card) => card.product.product_id === prod.product_id)) return
   productCards.value.push({
     product: prod,
-    details: [ { product_size: '', stock_quantity: 0, warehouse_id: undefined } ],
-    selectedWarehouseId: null
+    details: [{ product_size: '', stock_quantity: 0, warehouse_id: undefined }],
+    selectedWarehouseId: null,
   })
   selectedProduct.value = null
 }
@@ -333,7 +505,9 @@ const handleProductSelect = (prod: ProductSearchResult) => {
 const handleCardWarehouseChange = (cardIdx: number, warehouseId: number | null) => {
   const card = productCards.value[cardIdx]
   if (warehouseId) {
-    card.details.forEach(detail => { detail.warehouse_id = warehouseId })
+    card.details.forEach((detail) => {
+      detail.warehouse_id = warehouseId
+    })
   }
 }
 
@@ -342,7 +516,8 @@ const addDetailRow = (cardIdx: number) => {
   card.details.push({
     product_size: '',
     stock_quantity: 0,
-    warehouse_id: typeof card.selectedWarehouseId === 'number' ? card.selectedWarehouseId : undefined
+    warehouse_id:
+      typeof card.selectedWarehouseId === 'number' ? card.selectedWarehouseId : undefined,
   })
 }
 
@@ -356,13 +531,13 @@ const removeProductCard = (cardIdx: number) => {
 
 const handleAddSubmit = async () => {
   // 校验所有卡片明细
-  const items = productCards.value.flatMap(card =>
-    card.details.map(detail => ({
+  const items = productCards.value.flatMap((card) =>
+    card.details.map((detail) => ({
       product_id: card.product.product_id,
       product_size: detail.product_size,
       stock_quantity: detail.stock_quantity,
       warehouse_id: detail.warehouse_id,
-    }))
+    })),
   )
   if (!items.length) {
     ElMessage.warning('请添加至少一条库存明细')
@@ -375,7 +550,14 @@ const handleAddSubmit = async () => {
       return
     }
   }
-  await addProductWarehouseRecords(items as Array<{ product_id: number; product_size: string; stock_quantity: number; warehouse_id: number }>)
+  await addProductWarehouseRecords(
+    items as Array<{
+      product_id: number
+      product_size: string
+      stock_quantity: number
+      warehouse_id: number
+    }>,
+  )
   ElMessage.success('新增成功')
   addDialogVisible.value = false
   productCards.value = []
@@ -399,7 +581,7 @@ const fetchInventoryList = async () => {
     total.value = responseData.pagination?.total || (responseData.list?.length ?? 0)
   } finally {
     loading.value = false
-    }
+  }
 }
 
 const handleSearch = () => {
@@ -415,36 +597,45 @@ const resetSearch = () => {
 
 // 产品卡片结构
 interface ProductCard {
-  product: ProductSearchResult;
-  details: Array<{ product_size: string; stock_quantity: number; warehouse_id: number | undefined }>;
-  selectedWarehouseId?: number | null;
+  product: ProductSearchResult
+  details: Array<{ product_size: string; stock_quantity: number; warehouse_id: number | undefined }>
+  selectedWarehouseId?: number | null
 }
 
 // 商品搜索结果类型适配
 interface ProductSearchResult {
-  product_id: number;
-  product_title: string;
-  product_sku: string;
-  product_image?: string;
+  product_id: number
+  product_title: string
+  product_sku: string
+  product_image?: string
 }
 
 // 批量编辑相关
 const batchEditDialogVisible = ref(false)
 const currentBatchProduct = ref<Product | null>(null)
-const batchEditItems = ref<Array<{ id?: number; product_id: number; warehouse_id: number; warehouse_name: string; product_size: string; stock_quantity: number; }>>([])
+const batchEditItems = ref<
+  Array<{
+    id?: number
+    product_id: number
+    warehouse_id: number
+    warehouse_name: string
+    product_size: string
+    stock_quantity: number
+  }>
+>([])
 
 const openBatchEditDialog = (prod: Product) => {
   currentBatchProduct.value = prod
   // 将嵌套的仓库和库存数据扁平化处理，并带上 product_id
-  batchEditItems.value = prod.warehouses.flatMap(warehouse =>
-    warehouse.stocks.map(stock => ({
+  batchEditItems.value = prod.warehouses.flatMap((warehouse) =>
+    warehouse.stocks.map((stock) => ({
       id: stock.id,
       product_id: prod.product_id,
       warehouse_id: warehouse.warehouse_id,
       warehouse_name: warehouse.warehouse_name,
       product_size: stock.product_size,
-      stock_quantity: stock.stock_quantity
-    }))
+      stock_quantity: stock.stock_quantity,
+    })),
   )
   batchEditDialogVisible.value = true
 }
@@ -459,12 +650,12 @@ const handleStockQuantityChange = (row: { stock_quantity: number }) => {
 const handleBatchEditSubmit = async () => {
   try {
     // 构建更新数据，区分更新和新增的记录
-    const updateItems = batchEditItems.value.map(item => {
+    const updateItems = batchEditItems.value.map((item) => {
       const baseItem = {
         product_id: currentBatchProduct.value?.product_id ?? 0,
         product_size: item.product_size,
         warehouse_id: item.warehouse_id,
-        stock_quantity: item.stock_quantity
+        stock_quantity: item.stock_quantity,
       }
       // 如果有id，说明是更新已有记录，需要包含id
       if (item.id) {
@@ -476,45 +667,56 @@ const handleBatchEditSubmit = async () => {
 
     // 调用批量更新接口
     await updateProductWarehouseRecords(0, updateItems)
-    ElMessage.success("批量更新成功")
+    ElMessage.success('批量更新成功')
     batchEditDialogVisible.value = false
     fetchInventoryList()
   } catch (error) {
-    ElMessage.error("批量更新失败")
-    console.error("批量更新失败:", error)
+    ElMessage.error('批量更新失败')
+    console.error('批量更新失败:', error)
   }
 }
 
 // 新增批量编辑项弹窗状态
 const addBatchEditItemDialogVisible = ref(false)
-const newBatchEditItem = reactive<{ product_id: number; warehouse_id: number | undefined; product_size: string; stock_quantity: number; }>({
+const newBatchEditItem = reactive<{
+  product_id: number
+  warehouse_id: number | undefined
+  product_size: string
+  stock_quantity: number
+}>({
   product_id: 0,
   warehouse_id: undefined,
-  product_size: "",
-  stock_quantity: 0
+  product_size: '',
+  stock_quantity: 0,
 })
 
 function openAddBatchEditItemDialog() {
   if (currentBatchProduct.value) {
     newBatchEditItem.product_id = currentBatchProduct.value.product_id
   } else {
-    ElMessage.warning("未选择产品")
+    ElMessage.warning('未选择产品')
     return
   }
   newBatchEditItem.warehouse_id = undefined
-  newBatchEditItem.product_size = ""
+  newBatchEditItem.product_size = ''
   newBatchEditItem.stock_quantity = 0
   addBatchEditItemDialogVisible.value = true
 }
 
 function addBatchEditItem() {
   if (newBatchEditItem.warehouse_id === undefined || !newBatchEditItem.product_size) {
-    ElMessage.warning("请填写完整信息")
+    ElMessage.warning('请填写完整信息')
     return
   }
-  const w = warehouseOptions.value.find(w => w.id === newBatchEditItem.warehouse_id)
+  const w = warehouseOptions.value.find((w) => w.id === newBatchEditItem.warehouse_id)
   if (w) {
-    batchEditItems.value.push({ product_id: newBatchEditItem.product_id, warehouse_id: newBatchEditItem.warehouse_id, warehouse_name: w.name, product_size: newBatchEditItem.product_size, stock_quantity: newBatchEditItem.stock_quantity })
+    batchEditItems.value.push({
+      product_id: newBatchEditItem.product_id,
+      warehouse_id: newBatchEditItem.warehouse_id,
+      warehouse_name: w.name,
+      product_size: newBatchEditItem.product_size,
+      stock_quantity: newBatchEditItem.stock_quantity,
+    })
   }
   addBatchEditItemDialogVisible.value = false
 }
@@ -526,15 +728,19 @@ function removeBatchEditItem(index: number) {
 const handleDeleteProductWarehouse = (product_id: number, product_name: string) => {
   ElMessageBox.confirm(
     `确定要删除产品 " ${product_name} " 的所有库存记录吗？此操作不可恢复！`,
-    '提示', {
+    '提示',
+    {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
-    }).then(async () => {
+    },
+  )
+    .then(async () => {
       await deleteProductWarehouseRecord(product_id)
       ElMessage.success('删除成功')
       fetchInventoryList()
-    }).catch(() => {})
+    })
+    .catch(() => {})
 }
 
 const handlePageChange = (page: number) => {
@@ -570,13 +776,13 @@ export default {
 .inventory-container {
   border-radius: 12px;
 }
-.inventory-container-title{
+.inventory-container-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
-.title{
+.title {
   font-size: 18px;
   font-weight: bold;
 }

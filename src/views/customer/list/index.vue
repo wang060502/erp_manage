@@ -19,6 +19,16 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="客户级别" style="width: 220px">
+          <el-select v-model="searchForm.customer_level" placeholder="请选择客户级别" clearable>
+            <el-option
+              v-for="item in customerLevelOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="付款状态" style="width: 220px">
           <el-select v-model="searchForm.payment_status" placeholder="请选择付款状态" clearable>
             <el-option
@@ -343,11 +353,18 @@
           <span>销售时间：{{ dayjs(order.sales_time).format('YYYY-MM-DD HH:mm:ss') }}</span>
           <span>总金额：${{ order.total_amount }}</span>
           <span>创建人：{{ order.creator_name }}</span>
+          <el-button
+            type="danger"
+            size="small"
+            @click="handleDeleteSalesRecord(order)"
+            style="margin-left: auto"
+            >删除</el-button
+          >
         </div>
         <el-table :data="order.products" size="small" class="order-products-table">
           <el-table-column label="图片" width="60">
             <template #default="{ row }">
-              <img :src="row.product_image" style="width:40px;height:40px;object-fit:cover;" />
+              <img :src="row.product_image" style="width: 40px; height: 40px; object-fit: cover" />
             </template>
           </el-table-column>
           <el-table-column prop="product_title" label="商品名称" min-width="120" />
@@ -359,11 +376,19 @@
           <el-table-column prop="remark" label="备注" min-width="120">
             <template #default="{ row }">
               <el-tooltip v-if="row.remark" :content="row.remark" placement="top" effect="dark">
-                <span style="display:inline-block;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <span
+                  style="
+                    display: inline-block;
+                    max-width: 100px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  "
+                >
                   {{ row.remark }}
                 </span>
               </el-tooltip>
-              <span v-else style="color:#bbb;">-</span>
+              <span v-else style="color: #bbb">-</span>
             </template>
           </el-table-column>
         </el-table>
@@ -376,7 +401,7 @@
         layout="total, sizes, prev, pager, next, jumper"
         @size-change="handleSalesRecordSizeChange"
         @current-change="handleSalesRecordPageChange"
-        style="margin: 16px 0 0 0;"
+        style="margin: 16px 0 0 0"
       />
       <template #footer>
         <el-button @click="handleCloseSalesRecord">关闭</el-button>
@@ -385,9 +410,19 @@
 
     <!-- 新增销售记录弹窗 -->
     <el-dialog v-model="addSalesRecordDialogVisible" title="新增产品销售记录" width="700px">
-      <el-form ref="addSalesRecordFormRef" :model="addSalesRecordForm" :rules="addSalesRecordRules" label-width="100px">
+      <el-form
+        ref="addSalesRecordFormRef"
+        :model="addSalesRecordForm"
+        :rules="addSalesRecordRules"
+        label-width="100px"
+      >
         <el-form-item label="销售时间" prop="sales_time">
-          <el-date-picker v-model="addSalesRecordForm.sales_time" type="datetime" placeholder="选择销售时间" style="width: 100%;" />
+          <el-date-picker
+            v-model="addSalesRecordForm.sales_time"
+            type="datetime"
+            placeholder="选择销售时间"
+            style="width: 100%"
+          />
         </el-form-item>
         <el-form-item label="产品明细" prop="products">
           <div class="product-detail-list">
@@ -399,8 +434,21 @@
               <div class="product-card-toolbar">
                 <span class="product-index">{{ idx + 1 }}</span>
                 <div class="product-toolbar-actions">
-                  <el-button icon="Plus" @click="handleAddProductRow" circle type="success" size="small" />
-                  <el-button icon="Minus" @click="() => handleRemoveProductRow(idx)" circle type="danger" size="small" :disabled="addSalesRecordForm.products.length === 1" />
+                  <el-button
+                    icon="Plus"
+                    @click="handleAddProductRow"
+                    circle
+                    type="success"
+                    size="small"
+                  />
+                  <el-button
+                    icon="Minus"
+                    @click="() => handleRemoveProductRow(idx)"
+                    circle
+                    type="danger"
+                    size="small"
+                    :disabled="addSalesRecordForm.products.length === 1"
+                  />
                 </div>
               </div>
               <div class="product-detail-fields">
@@ -409,12 +457,16 @@
                     v-model="prod.product_title"
                     :fetch-suggestions="(q, cb) => querySearchProductName(q, cb)"
                     placeholder="输入商品名"
-                    @select="val => handleProductNameSelect(val, idx)"
+                    @select="(val) => handleProductNameSelect(val, idx)"
                     class="product-input"
                   >
                     <template #default="{ item }">
                       <div class="product-autocomplete-item">
-                        <img v-if="item.product_image" :src="item.product_image" class="product-img" />
+                        <img
+                          v-if="item.product_image"
+                          :src="item.product_image"
+                          class="product-img"
+                        />
                         <div>
                           <div class="product-title">{{ item.product_title }}</div>
                           <div class="product-sku">SKU: {{ item.product_sku }}</div>
@@ -428,12 +480,16 @@
                     v-model="prod.product_sku"
                     :fetch-suggestions="(q, cb) => querySearchProductSku(q, cb)"
                     placeholder="输入SKU"
-                    @select="val => handleProductSkuSelect(val, idx)"
+                    @select="(val) => handleProductSkuSelect(val, idx)"
                     class="product-input"
                   >
                     <template #default="{ item }">
                       <div class="product-autocomplete-item">
-                        <img v-if="item.product_image" :src="item.product_image" class="product-img" />
+                        <img
+                          v-if="item.product_image"
+                          :src="item.product_image"
+                          class="product-img"
+                        />
                         <div>
                           <div class="product-title">{{ item.product_title }}</div>
                           <div class="product-sku">SKU: {{ item.product_sku }}</div>
@@ -443,15 +499,40 @@
                   </el-autocomplete>
                 </el-form-item>
                 <el-form-item label="数量" :required="true" class="product-form-item">
-                  <el-input v-model.number="prod.quantity" type="number" min="1" @input="() => calcTotalPrice(idx)" placeholder="数量" class="product-input" />
+                  <el-input
+                    v-model.number="prod.quantity"
+                    type="number"
+                    min="1"
+                    @input="() => calcTotalPrice(idx)"
+                    placeholder="数量"
+                    class="product-input"
+                  />
                 </el-form-item>
                 <el-form-item label="单价" :required="true" class="product-form-item">
-                  <el-input v-model.number="prod.unit_price" type="number" min="0" step="0.01" @input="() => calcTotalPrice(idx)" placeholder="单价" class="product-input" />
+                  <el-input
+                    v-model.number="prod.unit_price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    @input="() => calcTotalPrice(idx)"
+                    placeholder="单价"
+                    class="product-input"
+                  />
                 </el-form-item>
                 <el-form-item label="总价" class="product-form-item">
-                  <el-input v-model.number="prod.total_price" type="number" readonly placeholder="总价" class="product-input product-total" />
+                  <el-input
+                    v-model.number="prod.total_price"
+                    type="number"
+                    readonly
+                    placeholder="总价"
+                    class="product-input product-total"
+                  />
                 </el-form-item>
-                <el-form-item label="备注" class="product-form-item product-remark-item" style="width:100%;">
+                <el-form-item
+                  label="备注"
+                  class="product-form-item product-remark-item"
+                  style="width: 100%"
+                >
                   <el-input
                     v-model="prod.remark"
                     type="textarea"
@@ -487,7 +568,11 @@ import {
   batchDeleteCustomers,
   getCustomerCreators,
 } from '@/api/customer/customerlist'
-import { getSalesRecordsByCustomer, addSalesRecord } from '@/api/customer/salesrecords'
+import {
+  getSalesRecordsByCustomer,
+  addSalesRecord,
+  deleteSalesRecordByCustomerAndTime,
+} from '@/api/customer/salesrecords'
 import { getProductList } from '@/api/product/list'
 
 interface Customer {
@@ -512,6 +597,7 @@ const searchForm = reactive({
   name: '',
   status: '',
   payment_status: '',
+  customer_level: '',
   creator_id: undefined as number | undefined,
 })
 
@@ -580,6 +666,7 @@ const resetSearch = () => {
   searchForm.name = ''
   searchForm.status = ''
   searchForm.payment_status = ''
+  searchForm.customer_level = ''
   searchForm.creator_id = undefined
   handleSearch()
 }
@@ -700,6 +787,7 @@ const fetchCustomers = async () => {
       limit: pageSize.value,
       customer_name: searchForm.name || undefined,
       customer_status: searchForm.status || undefined,
+      customer_level: searchForm.customer_level || undefined,
       payment_status: searchForm.payment_status || undefined,
       creator_id: searchForm.creator_id || undefined,
     }
@@ -772,67 +860,74 @@ const addSalesRecordForm = reactive({
 })
 const addSalesRecordRules = reactive<FormRules>({
   sales_time: [{ required: true, message: '请选择销售时间', trigger: 'change' }],
-  products: [{
-    validator: (rule, value, callback) => {
-      if (!value || !Array.isArray(value) || value.length === 0) {
-        callback(new Error('请至少添加一个产品'))
-      } else {
-        for (const prod of value) {
-          if (!prod.product_id) return callback(new Error('请选择产品'))
-          if (!prod.product_sku) return callback(new Error('请输入SKU'))
-          if (!prod.quantity) return callback(new Error('请输入数量'))
-          if (!prod.unit_price) return callback(new Error('请输入单价'))
-          if (!prod.total_price) return callback(new Error('请输入总价'))
+  products: [
+    {
+      validator: (rule, value, callback) => {
+        if (!value || !Array.isArray(value) || value.length === 0) {
+          callback(new Error('请至少添加一个产品'))
+        } else {
+          for (const prod of value) {
+            if (!prod.product_id) return callback(new Error('请选择产品'))
+            if (!prod.product_sku) return callback(new Error('请输入SKU'))
+            if (!prod.quantity) return callback(new Error('请输入数量'))
+            if (!prod.unit_price) return callback(new Error('请输入单价'))
+            if (!prod.total_price) return callback(new Error('请输入总价'))
+          }
+          callback()
         }
-        callback()
-      }
-    }, trigger: 'blur',
-  }],
+      },
+      trigger: 'blur',
+    },
+  ],
 })
 
 // 产品选择相关
 interface Product {
-  product_id: number;
-  product_title: string;
-  product_sku: string;
-  product_image?: string;
+  product_id: number
+  product_title: string
+  product_sku: string
+  product_image?: string
 }
 
 const querySearchProductName = async (queryString, cb) => {
-  const res = await getProductList({ product_title: queryString, page: 1, page_size: 20 });
-  cb((res.data?.list || []).map(item => ({
-    product_id: item.product_id,
-    product_title: item.product_title,
-    product_sku: item.product_sku,
-    product_image: item.product_image,
-  })));
-};
+  const res = await getProductList({ product_title: queryString, page: 1, page_size: 20 })
+  cb(
+    (res.data?.list || []).map((item) => ({
+      product_id: item.product_id,
+      product_title: item.product_title,
+      product_sku: item.product_sku,
+      product_image: item.product_image,
+    })),
+  )
+}
 
 const querySearchProductSku = async (queryString, cb) => {
-  const res = await getProductList({ product_sku: queryString, page: 1, page_size: 20 });
-  cb((res.data?.list || []).map(item => ({
-    product_id: item.product_id,
-    product_title: item.product_title,
-    product_sku: item.product_sku,
-    product_image: item.product_image,
-  })));
-};
+  const res = await getProductList({ product_sku: queryString, page: 1, page_size: 20 })
+  cb(
+    (res.data?.list || []).map((item) => ({
+      product_id: item.product_id,
+      product_title: item.product_title,
+      product_sku: item.product_sku,
+      product_image: item.product_image,
+    })),
+  )
+}
 
 const handleProductNameSelect = (item, idx) => {
-  const prod = addSalesRecordForm.products[idx];
-  prod.product_id = item.product_id;
-  prod.product_title = item.product_title;
-  prod.product_sku = item.product_sku;
-  prod.product_image = item.product_image;
-};
+  const prod = addSalesRecordForm.products[idx]
+  prod.product_id = item.product_id
+  prod.product_title = item.product_title
+  prod.product_sku = item.product_sku
+  prod.product_image = item.product_image
+}
 
 const handleProductSkuSelect = (item, idx) => {
-  const prod = addSalesRecordForm.products[idx];
-  prod.product_id = item.product_id;
-  prod.product_title = item.product_title;
-  prod.product_sku = item.product_sku;
-  prod.product_image = item.product_image;
-};
+  const prod = addSalesRecordForm.products[idx]
+  prod.product_id = item.product_id
+  prod.product_title = item.product_title
+  prod.product_sku = item.product_sku
+  prod.product_image = item.product_image
+}
 
 const handleAddProductRow = () => {
   addSalesRecordForm.products.push({
@@ -880,7 +975,7 @@ const handleSubmitAddSalesRecord = async () => {
     if (valid && salesRecordCustomerId.value) {
       await addSalesRecord({
         customer_id: salesRecordCustomerId.value,
-        products: addSalesRecordForm.products.map(p => ({
+        products: addSalesRecordForm.products.map((p) => ({
           product_id: p.product_id,
           product_sku: p.product_sku,
           quantity: p.quantity,
@@ -941,9 +1036,26 @@ const handleSalesRecordSizeChange = (size: number) => {
   }
 }
 
+const handleDeleteSalesRecord = async (order) => {
+  await ElMessageBox.confirm('删除后客户总销售金额也会随之更新，是否确认删除该销售记录？', '警告', {
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+  try {
+    await deleteSalesRecordByCustomerAndTime(salesRecordCustomerId.value, order.sales_time)
+    ElMessage.success('删除销售记录成功')
+    if (salesRecordCustomerId.value) {
+      await fetchSalesRecords(salesRecordCustomerId.value)
+    }
+  } catch (e) {
+    ElMessage.error('删除失败，请重试')
+  }
+}
+
 function formatDate(dateStr: string) {
-  if (!dateStr) return '';
-  return dateStr.replace('T', ' ').replace(/\\.\\d+Z?$/, '');
+  if (!dateStr) return ''
+  return dateStr.replace('T', ' ').replace(/\\.\\d+Z?$/, '')
 }
 </script>
 
@@ -1003,7 +1115,7 @@ function formatDate(dateStr: string) {
 }
 .product-detail-card {
   background: #fff;
-  border-bottom:1px dashed #979899;
+  border-bottom: 1px dashed #979899;
   padding: 32px 24px 12px 24px;
   position: relative;
   display: flex;
@@ -1038,15 +1150,15 @@ function formatDate(dateStr: string) {
   border-radius: 50%;
   font-size: 13px;
   font-weight: bold;
-  box-shadow: 0 1px 4px rgba(64,158,255,0.08);
+  box-shadow: 0 1px 4px rgba(64, 158, 255, 0.08);
   margin-right: 4px;
 }
 .el-button {
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   transition: box-shadow 0.2s;
 }
 .el-button:hover {
-  box-shadow: 0 2px 8px rgba(64,158,255,0.18);
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.18);
 }
 .product-detail-fields {
   flex: 1;
@@ -1102,7 +1214,7 @@ function formatDate(dateStr: string) {
   background: #f8fafd;
   border-radius: 8px;
   padding: 12px 8px 8px 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 .order-header {
   display: flex;

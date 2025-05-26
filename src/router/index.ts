@@ -49,11 +49,11 @@ const router = createRouter({
               },
             },
             {
-              path: 'price',
-              component: () => import('@/views/product/price/index.vue'),
+              path: 'statistics',
+              component: () => import('@/views/product/statistics/index.vue'),
               meta: {
-                title: '价格管理',
-                icon: 'Money',
+                title: '商品统计',
+                icon: 'TrendCharts',
               },
             },
           ],
@@ -148,14 +148,6 @@ const router = createRouter({
               meta: {
                 title: '客户列表',
                 icon: 'List',
-              },
-            },
-            {
-              path: 'category',
-              component: () => import('@/views/customer/category/index.vue'),
-              meta: {
-                title: '客户分类',
-                icon: 'Files',
               },
             },
             {

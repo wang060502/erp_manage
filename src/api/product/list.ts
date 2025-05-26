@@ -94,3 +94,14 @@ export function batchDeleteProducts(productIds: number[]) {
     data: { productIds },
   })
 }
+
+/**
+ * 获取产品分类统计
+ * @returns Promise
+ */
+export function getProductCategoryStats() {
+  return request({
+    url: '/api/products/stats/category',
+    method: 'get',
+  })
+}

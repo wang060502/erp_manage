@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance, type AxiosResponse } from 'axios'
-// import router from '@/router'
+import router from '@/router'
 // import { useAuthStore } from '@/stores/auth'
 import { ElLoading, ElMessage } from 'element-plus'
 
@@ -101,12 +101,14 @@ instance.interceptors.response.use(
         case 401:
           message = '未授权，请重新登录'
           // 清除token并跳转到登录页
-          // const authStore = useAuthStore()
-          // authStore.validateToken()
-          // router.push('/login')
+          const token = localStorage.getItem('token')
+          if (token) {
+            localStorage.removeItem('token')
+            router.push('/login')
+          }
           break
         case 403:
-          message = '拒绝访问'
+          message = '拒绝访问:' + error.response.data.error
           break
         case 404:
           message = '请求的资源不存在'
