@@ -22,129 +22,65 @@
         </div>
       </div>
     </template>
-
-    <div class="customer-analysis-section">
-      <div class="section-header">
-        <div class="search-form-left">
-          <el-form :inline="true" :model="searchForm" class="search-form" @submit.prevent>
-            <el-form-item label="客户状态">
-              <el-select
-                v-model="searchForm.customer_status"
-                placeholder="全部"
-                clearable
-                style="width: 140px"
-              >
-                <el-option label="潜在客户" value="潜在客户" />
-                <el-option label="成交客户" value="成交客户" />
-                <el-option label="战略合作" value="战略合作" />
-                <el-option label="无效客户" value="无效客户" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="客户等级">
-              <el-select
-                v-model="searchForm.customer_level"
-                placeholder="全部"
-                clearable
-                style="width: 140px"
-              >
-                <el-option label="重要客户" value="重要客户" />
-                <el-option label="一般客户" value="一般客户" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="付款状态">
-              <el-select
-                v-model="searchForm.payment_status"
-                placeholder="全部"
-                clearable
-                style="width: 140px"
-              >
-                <el-option label="待付款" value="待付款" />
-                <el-option label="已付款部分" value="已付款部分" />
-                <el-option label="已结清" value="已结清" />
-              </el-select>
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="fetchStats">查询</el-button>
-              <el-button @click="resetSearch">重置</el-button>
-            </el-form-item>
-          </el-form>
-        </div>
-
-        <div class="overview-right">
-          <div class="overview-item">
-            <div class="overview-title">客户总数</div>
-            <div class="overview-value">{{ stats?.total ?? '-' }}</div>
+    <div class="content-inner">
+      <div class="kpi-row-wrapper">
+        <div class="kpi-side-info">
+          <div class="welcome-msg">欢迎使用客户分析仪表盘！</div>
+          <div class="brand-slogan">
+            这里为您提供客户全生命周期的可视化分析，助力企业高效洞察客户结构与业务趋势。
           </div>
-          <div class="overview-item">
-            <div class="overview-title">转化率</div>
-            <div class="overview-value">{{ stats?.conversion_rate ?? '-' }}</div>
+          <div class="kpi-guide">
+            <span>
+              您可以在右侧查看核心客户指标，快速了解当前客户总数、转化率及成交金额。
+            </span>
+          </div>
+          <div class="kpi-support">
+            下方图表支持多维度交互分析，点击图例或柱状可筛选细分数据，帮助您发现更多业务机会。
+          </div>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi-card kpi-users">
+            <i class="iconfont icon-user"></i>
+            <div class="kpi-title">客户总数</div>
+            <div class="kpi-value"><span class="kpi-num">{{ stats?.total ?? '-' }}</span></div>
+          </div>
+          <div class="kpi-card kpi-rate">
+            <i class="iconfont icon-percent"></i>
+            <div class="kpi-title">转化率</div>
+            <div class="kpi-value"><span class="kpi-num">{{ stats?.conversion_rate ?? '-' }}</span></div>
+          </div>
+          <div class="kpi-card kpi-amount">
+            <i class="iconfont icon-money"></i>
+            <div class="kpi-title">总成交金额</div>
+            <div class="kpi-value"><span class="kpi-unit">$</span><span class="kpi-num">{{ stats?.total_deal_amount ?? '-' }}</span></div>
           </div>
         </div>
       </div>
-      <div class="charts-row">
-        <div class="chart-block">
-          <div class="chart-title">客户状态分布</div>
-          <v-chart v-if="statusOption" :option="statusOption" autoresize style="height: 300px" />
+      <div class="main-chart-card">
+        <div class="main-chart-title">客户分布总览</div>
+        <v-chart v-if="statusOption" :option="statusOption" autoresize style="height: 340px" />
+        <div v-else class="chart-placeholder">暂无数据</div>
+      </div>
+      <div class="sub-charts-row">
+        <div class="sub-chart-card">
+          <div class="sub-chart-title">客户消费排行榜</div>
+          <v-chart
+            v-if="consumptionBarOption"
+            :option="consumptionBarOption"
+            autoresize
+            style="height: 320px"
+          />
           <div v-else class="chart-placeholder">暂无数据</div>
         </div>
-        <div class="chart-block">
-          <div class="chart-title">客户等级分布</div>
-          <v-chart v-if="levelOption" :option="levelOption" autoresize style="height: 300px" />
+        <div class="sub-chart-card">
+          <div class="sub-chart-title">客户销售业绩统计</div>
+          <v-chart
+            v-if="salesPerformanceOption"
+            :option="salesPerformanceOption"
+            autoresize
+            style="height: 320px"
+          />
           <div v-else class="chart-placeholder">暂无数据</div>
-        </div>
-        <div class="chart-block">
-          <div class="chart-title">付款状态分布</div>
-          <v-chart v-if="paymentOption" :option="paymentOption" autoresize style="height: 300px" />
-          <div v-else class="chart-placeholder">暂无数据</div>
-        </div>
-      </div>
-      <div class="consumption-search-bar" style="margin-bottom: 12px; text-align: right; gap: 8px">
-        <el-select
-          v-model="consumptionSearchForm.customer_level"
-          placeholder="请选择客户等级"
-          clearable
-          style="width: 160px; margin-right: 10px"
-        >
-          <el-option label="重要客户" value="重要客户" />
-          <el-option label="一般客户" value="一般客户" />
-        </el-select>
-        <el-button type="primary" @click="handleConsumptionSearch">查询</el-button>
-        <el-button @click="resetConsumptionSearch">重置</el-button>
-      </div>
-      <div class="customer-consumption-ranking">
-        <v-chart
-          v-if="consumptionBarOption"
-          :option="consumptionBarOption"
-          autoresize
-          style="height: 400px"
-        />
-        <div v-else class="chart-placeholder">
-          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-            <rect x="8" y="20" width="48" height="28" rx="4" fill="#F5F7FA" />
-            <rect x="8" y="20" width="48" height="28" rx="4" stroke="#E4E7ED" stroke-width="2" />
-            <path d="M8 28H56" stroke="#E4E7ED" stroke-width="2" />
-            <rect x="20" y="36" width="8" height="4" rx="2" fill="#E4E7ED" />
-            <rect x="36" y="36" width="8" height="4" rx="2" fill="#E4E7ED" />
-          </svg>
-          <span>暂无数据</span>
-        </div>
-      </div>
-      <div class="customer-sales-performance-ranking">
-        <v-chart
-          v-if="salesPerformanceOption"
-          :option="salesPerformanceOption"
-          autoresize
-          style="height: 400px"
-        />
-        <div v-else class="chart-placeholder">
-          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-            <rect x="8" y="20" width="48" height="28" rx="4" fill="#F5F7FA" />
-            <rect x="8" y="20" width="48" height="28" rx="4" stroke="#E4E7ED" stroke-width="2" />
-            <path d="M8 28H56" stroke="#E4E7ED" stroke-width="2" />
-            <rect x="20" y="36" width="8" height="4" rx="2" fill="#E4E7ED" />
-            <rect x="36" y="36" width="8" height="4" rx="2" fill="#E4E7ED" />
-          </svg>
-          <span>暂无数据</span>
         </div>
       </div>
     </div>
@@ -169,7 +105,9 @@ import {
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import { Refresh } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
+
+defineOptions({ name: 'CustomerAnalysis' })
 
 use([
   PieChart,
@@ -187,12 +125,10 @@ const searchForm = reactive({
   payment_status: '',
 })
 
-const stats = ref<any>(null)
-const statusOption = ref<any>(null)
-const levelOption = ref<any>(null)
-const paymentOption = ref<any>(null)
-const consumptionBarOption = ref<any>(null)
-const salesPerformanceOption = ref<any>(null)
+const stats = ref<Record<string, unknown> | null>(null)
+const statusOption = ref<Record<string, unknown> | null>(null)
+const consumptionBarOption = ref<Record<string, unknown> | null>(null)
+const salesPerformanceOption = ref<Record<string, unknown> | null>(null)
 
 const consumptionSearchForm = reactive({
   customer_level: '',
@@ -211,71 +147,94 @@ const fetchStats = async () => {
   const res = await getCustomerStats(params)
   stats.value = res.data || {}
   // 客户状态分布
-  const statusStats = stats.value.status_stats || {}
-  const statusData = Object.keys(statusStats).map((k) => ({ name: k, value: statusStats[k] }))
-  statusOption.value =
-    statusData.length && statusData.some((d) => d.value > 0)
-      ? {
-          tooltip: { trigger: 'item' },
-          legend: { top: 'bottom' },
-          series: [
-            {
-              name: '客户状态',
-              type: 'pie',
-              radius: '60%',
-              data: statusData,
-              label: { formatter: '{b}: {c} ({d}%)' },
-            },
-          ],
-          animation: true,
-          animationDuration: 800,
-          animationEasing: 'cubicOut',
-        }
-      : null
-  // 客户等级分布
-  const levelStats = stats.value.level_stats || {}
-  const levelData = Object.keys(levelStats).map((k) => ({ name: k, value: levelStats[k] }))
-  levelOption.value =
-    levelData.length && levelData.some((d) => d.value > 0)
-      ? {
-          tooltip: { trigger: 'item' },
-          legend: { top: 'bottom' },
-          series: [
-            {
-              name: '客户等级',
-              type: 'pie',
-              radius: '60%',
-              data: levelData,
-              label: { formatter: '{b}: {c} ({d}%)' },
-            },
-          ],
-          animation: true,
-          animationDuration: 800,
-          animationEasing: 'cubicOut',
-        }
-      : null
-  // 付款状态分布
-  const paymentStats = stats.value.payment_stats || {}
-  const paymentData = Object.keys(paymentStats).map((k) => ({ name: k, value: paymentStats[k] }))
-  paymentOption.value =
-    paymentData.length && paymentData.some((d) => d.value > 0)
-      ? {
-          tooltip: { trigger: 'item' },
-          legend: { top: 'bottom' },
-          series: [
-            {
-              name: '付款状态',
-              type: 'pie',
-              radius: '60%',
-              data: paymentData,
-              label: { formatter: '{b}: {c} ({d}%)' },
-            },
-          ],
-          animation: true,
-          animationDuration: 800,
-          animationEasing: 'cubicOut',
-        }
-      : null
+  const statusStats = (stats.value?.status_stats as Record<string, number>) || {}
+  const levelStats = (stats.value?.level_stats as Record<string, number>) || {}
+  const paymentStats = (stats.value?.payment_stats as Record<string, number>) || {}
+
+  const categories = ['客户状态', '客户等级', '付款状态']
+
+  // 统计所有类型
+  const allTypes = [
+    ...Object.keys(statusStats),
+    ...Object.keys(levelStats),
+    ...Object.keys(paymentStats)
+  ]
+
+  // 颜色映射（可自定义品牌色系）
+  const colorMap: Record<string, string> = {
+    '潜在客户': '#5B8FF9',
+    '成交客户': '#61DDAA',
+    '战略合作': '#65789B',
+    '无效客户': '#F6BD16',
+    '重要客户': '#7262fd',
+    '一般客户': '#78D3F8',
+    '待付款': '#F6903D',
+    '已付款部分': '#FF99C3',
+    '已结清': '#6DC8EC'
+  }
+
+  // 构造series
+  const series = allTypes.map((type: string) => ({
+    name: type,
+    type: 'bar',
+    stack: null, // 分组，不堆叠
+    barWidth: 28,
+    itemStyle: {
+      borderRadius: [8, 8, 0, 0],
+      color: colorMap[type] || '#ccc',
+      shadowColor: 'rgba(0,0,0,0.08)',
+      shadowBlur: 6
+    },
+    label: {
+      show: true,
+      position: 'top',
+      color: '#333',
+      fontWeight: 600,
+      fontSize: 14
+    },
+    data: [
+      statusStats[type] || 0,
+      levelStats[type] || 0,
+      paymentStats[type] || 0
+    ]
+  }))
+
+  const option = {
+    title: {
+      text: '客户分布总览',
+      left: 'center',
+      top: 16,
+      textStyle: {
+        fontSize: 20,
+        fontWeight: 700,
+        color: '#222'
+      }
+    },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: {
+      top: 48,
+      icon: 'roundRect',
+      itemWidth: 18,
+      itemHeight: 10,
+      textStyle: { fontSize: 14, color: '#666' }
+    },
+    grid: { left: 40, right: 40, bottom: 40, top: 90 },
+    xAxis: {
+      type: 'category',
+      data: categories,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { fontSize: 16, color: '#333', fontWeight: 600 }
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { type: 'dashed', color: '#eee' } },
+      axisLabel: { fontSize: 14, color: '#888' }
+    },
+    series
+  }
+
+  statusOption.value = option
 }
 
 const fetchConsumptionRanking = async () => {
@@ -299,59 +258,38 @@ const fetchConsumptionRanking = async () => {
   }
 
   consumptionBarOption.value = {
-    title: { text: '客户消费排行榜(Top 20)', left: 'center', top: 10 },
-    legend: {
-      data: Object.keys(levelColorMap),
-      top: 40,
-      right: 20,
-      orient: 'vertical',
-      formatter: (name: string) => name,
-    },
+    title: { text: '客户消费排行榜', left: 'center', top: 10 },
+    grid: { left: 100, right: 40, bottom: 40, top: 60 },
     tooltip: {
-      trigger: 'item',
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
       formatter: (params: any) => {
-        const item = data[params.dataIndex]
-        return `
-          <div>
-            <strong>${item.customer_name}</strong><br/>
-            状态：${item.customer_status}<br/>
-            级别：${item.customer_level}<br/>
-            成交金额：${item.deal_price}$<br/>
-            占比：${item.percentage}
-          </div>
-        `
-      },
+        const item = data[params[0].dataIndex]
+        return `${item.customer_name}<br/>成交金额: ${item.deal_price}<br/>占比: ${item.percentage}`
+      }
     },
-    grid: { left: 60, right: 100, bottom: 40, top: 70 },
-    xAxis: {
+    xAxis: { type: 'value', name: '成交金额' },
+    yAxis: {
       type: 'category',
       data: nameArr,
-      name: '客户名称',
-      axisLabel: { rotate: 30 },
+      axisLabel: { fontSize: 14 },
+      inverse: true
     },
-    yAxis: {
-      type: 'value',
-      name: '成交金额',
-    },
-    series: [
-      {
-        name: '成交金额',
-        type: 'bar',
-        data: data.map((item: any) => ({
-          value: Number(item.deal_price),
-          itemStyle: { color: levelColorMap[item.customer_level] || '#409EFF' },
-        })),
+    series: [{
+      type: 'bar',
+      data: data.map((d: any) => ({
+        value: d.deal_price,
+        itemStyle: { color: levelColorMap[d.customer_level] || '#409EFF', borderRadius: [6, 6, 6, 6] },
         label: {
           show: true,
-          position: 'top',
-          formatter: (params: any) => `${params.value} $ (${data[params.dataIndex].percentage})`,
-        },
-        barWidth: 40,
-      },
-    ],
-    animation: true,
-    animationDuration: 800,
-    animationEasing: 'cubicOut',
+          position: 'right',
+          formatter: (p: any) => `${p.value}（${data[p.dataIndex].percentage}）`,
+          fontWeight: 600,
+          fontSize: 14
+        }
+      })),
+      barWidth: 28
+    }]
   }
 }
 
@@ -362,56 +300,36 @@ const fetchSalesPerformance = async () => {
     salesPerformanceOption.value = null
     return
   }
-  // 按成交金额降序排序
-  const sorted = [...data].sort((a, b) => b.total_amount - a.total_amount)
-  const nameArr = sorted.map((item) => item.real_name || item.username)
-  const amountArr = sorted.map((item) => item.total_amount)
-  const customerCountArr = sorted.map((item) => item.customer_count)
+
+  const names = data.map(d => d.real_name)
+  const totalAmounts = data.map(d => Number(d.total_amount))
+  const customerCounts = data.map(d => d.customer_count)
+
   salesPerformanceOption.value = {
-    title: { text: '客户销售业绩统计', left: 'center', top: 10 },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'shadow' },
-      formatter: (params: any) => {
-        const i = params[0].dataIndex
-        return `
-          <div>
-            <strong>${nameArr[i]}</strong><br/>
-            客户总数：${customerCountArr[i]}<br/>
-            成交金额：${amountArr[i]} $
-          </div>
-        `
-      },
-    },
-    grid: { left: 60, right: 80, bottom: 40, top: 70 },
-    xAxis: {
-      type: 'category',
-      data: nameArr,
-      name: '创建者',
-      axisLabel: { rotate: 30 },
-    },
-    yAxis: {
-      type: 'value',
-      name: '成交金额',
-    },
+    title: { text: '客户销售业绩统计', left: 'center', top: 10, textStyle: { fontSize: 18, fontWeight: 700 } },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { top: 40, data: ['成交总金额', '客户总数'] },
+    grid: { left: 60, right: 40, bottom: 40, top: 80 },
+    xAxis: { type: 'category', data: names, axisLabel: { rotate: 30 } },
+    yAxis: { type: 'value', name: '金额/数量' },
     series: [
       {
-        name: '成交金额',
+        name: '成交总金额',
         type: 'bar',
-        data: amountArr,
-        label: {
-          show: true,
-          position: 'top',
-          formatter: (params: any) =>
-            `${params.value} $ (客户数: ${customerCountArr[params.dataIndex]})`,
-        },
-        barWidth: 40,
-        itemStyle: { color: '#409EFF' },
+        data: totalAmounts,
+        barWidth: 32,
+        itemStyle: { color: '#409EFF', borderRadius: [8, 8, 0, 0] },
+        label: { show: true, position: 'top', fontWeight: 600 }
       },
-    ],
-    animation: true,
-    animationDuration: 800,
-    animationEasing: 'cubicOut',
+      {
+        name: '客户总数',
+        type: 'bar',
+        data: customerCounts,
+        barWidth: 32,
+        itemStyle: { color: '#67c23a', borderRadius: [8, 8, 0, 0] },
+        label: { show: true, position: 'top', fontWeight: 600 }
+      }
+    ]
   }
 }
 
@@ -478,81 +396,124 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.customer-analysis {
-  border-radius: 12px;
+.refresh-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
-
+.customer-analysis {
+  border-radius: 16px;
+  background: #f8fafd;
+  box-shadow: 0 2px 16px rgba(90,120,200,0.06);
+  padding-bottom: 32px;
+}
 .customer-analysis-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .title {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.search-form {
-  margin: 20px 0 10px 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.overview-row {
-  display: flex;
-  gap: 40px;
-  margin-bottom: 20px;
-}
-
-.overview-item {
-  background: #f5f7fa;
-  border-radius: 8px;
-  padding: 18px 32px;
-  min-width: 160px;
-  text-align: center;
-}
-
-.overview-title {
-  color: #909399;
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
-.overview-value {
   font-size: 22px;
-  font-weight: bold;
-  color: #303133;
+  font-weight: 700;
+  color: #222;
 }
-
-.charts-row {
+.content-inner {
+  padding: 0 48px;
+}
+.kpi-row-wrapper {
   display: flex;
-  gap: 24px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 32px;
 }
-
-.chart-block {
-  flex: 1 1 320px;
-  min-width: 260px;
-  max-width: 100%;
+.kpi-row {
+  display: flex;
+  gap: 32px;
+  flex-shrink: 0;
+}
+.kpi-card {
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.04);
-  padding: 18px 10px 10px 10px;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(90,120,200,0.10);
+  padding: 28px 44px 22px 44px;
+  min-width: 200px;
+  text-align: center;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 16px;
 }
-
-.chart-title {
+.kpi-card i {
+  position: absolute;
+  left: 24px;
+  top: 18px;
+  font-size: 32px;
+  color: #e6ecf5;
+}
+.kpi-title {
+  color: #888;
   font-size: 15px;
-  font-weight: 500;
   margin-bottom: 10px;
+  font-weight: 500;
 }
-
+.kpi-value {
+  font-size: 40px;
+  font-weight: 700;
+  color: #409EFF;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+.kpi-num {
+  font-size: 40px;
+  font-weight: 700;
+  color: #409EFF;
+}
+.kpi-unit {
+  font-size: 22px;
+  color: #b3c6e0;
+  margin-right: 2px;
+}
+.customer-analysis-section {
+  margin-bottom: 32px;
+}
+.main-chart-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(90,120,200,0.07);
+  padding: 24px 18px 12px 18px;
+  margin-bottom: 32px;
+}
+.main-chart-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 18px;
+  text-align: left;
+}
+.sub-charts-row {
+  display: flex;
+  gap: 32px;
+  margin-top: 0;
+}
+.sub-chart-card {
+  flex: 1 1 0;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(90,120,200,0.07);
+  padding: 24px 18px 12px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.sub-chart-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 16px;
+  text-align: left;
+}
 .chart-placeholder {
   display: flex;
   flex-direction: column;
@@ -566,95 +527,50 @@ onMounted(() => {
   padding: 24px 0 12px 0;
   background: transparent;
 }
-
-.chart-placeholder svg {
-  margin-bottom: 8px;
-  display: block;
-  width: 48px;
-  height: 48px;
-  opacity: 0.85;
-  transition: opacity 0.2s;
-}
-
-.chart-placeholder:hover svg {
-  opacity: 1;
-}
-
-.chart-placeholder span {
-  color: #a0a0a0;
+.kpi-side-info {
+  flex: 1 1 320px;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding-right: 32px;
+  color: #888;
   font-size: 15px;
-  margin-top: 2px;
-  font-weight: 400;
+  line-height: 1.8;
+  gap: 6px;
+}
+.welcome-msg {
+  font-size: 20px;
+  color: #222;
+  font-weight: 700;
+  margin-bottom: 10px;
   letter-spacing: 1px;
 }
-
-.customer-analysis-section {
-  margin-bottom: 32px;
+.brand-slogan {
+  font-size: 16px;
+  color: #409EFF;
+  font-weight: 500;
+  margin-bottom: 6px;
+  line-height: 1.7;
 }
-.section-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
-  gap: 16px;
+.kpi-guide, .kpi-support, .kpi-help {
+  font-size: 15px;
+  color: #888;
+  line-height: 1.7;
 }
-.section-title-center {
-  flex: 1;
-  text-align: center;
-  font-size: 20px;
-  font-weight: bold;
-  color: #222;
+.kpi-logo {
+  width: 48px;
+  margin-top: 12px;
+  opacity: 0.8;
 }
-.search-form-left {
-  min-width: 260px;
-  flex: 1 1 320px;
-}
-.overview-right {
-  display: flex;
-  gap: 24px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.overview-item {
-  background: #f5f7fa;
-  border-radius: 8px;
-  padding: 10px 24px;
-  min-width: 100px;
-  text-align: center;
-}
-.overview-title {
-  color: #909399;
-  font-size: 13px;
-  margin-bottom: 4px;
-}
-.overview-value {
-  font-size: 20px;
-  font-weight: bold;
-  color: #303133;
-}
-.customer-consumption-ranking {
-  margin-top: 32px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.04);
-  padding: 18px 10px 10px 10px;
-  min-width: 0;
-}
-.customer-sales-performance-ranking {
-  margin-top: 32px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.04);
-  padding: 18px 10px 10px 10px;
-  min-width: 0;
-}
-.refresh-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.refresh-controls .el-switch {
-  margin-right: 8px;
+@media (max-width: 1200px) {
+  .kpi-row, .sub-charts-row {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .main-chart-card, .sub-chart-card {
+    padding: 18px 8px 8px 8px;
+  }
 }
 </style>

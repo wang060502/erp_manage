@@ -10,6 +10,7 @@ export function addProductWarehouseRecords(items: Array<{
   product_size: string;
   stock_quantity: number;
   warehouse_id: number;
+  safe_stock_quantity: number;
 }>) {
   return request({
     url: '/api/product-warehouses',
@@ -29,6 +30,7 @@ export function getProductWarehouseList(params?: {
   product_name?: string;
   product_sku?: string;
   warehouse_id?: number;
+  safe_stock_quantity?: number;
 }) {
   return request({
     url: '/api/product-warehouses',
@@ -49,6 +51,7 @@ export function updateProductWarehouseRecords(id: number, items: Array<{
   product_size: string;
   warehouse_id: number;
   stock_quantity: number;
+  safe_stock_quantity?: number;
 }>) {
   return request({
     url: `/api/product-warehouses/${id}`,
@@ -66,6 +69,33 @@ export function deleteProductWarehouseRecord(product_id: number) {
   return request({
     url: `/api/product-warehouses/${product_id}`,
     method: 'delete',
+  })
+}
+
+/**
+ * 根据产品ID查询该产品所有仓库的库存列表
+ * @param productId 产品ID
+ * @returns Promise<any>
+ */
+export function getWarehousesByProductId(productId: number) {
+  return request({
+    url: `/api/product-warehouses/product/${productId}`,
+    method: 'get',
+  })
+}
+
+/**
+ * 获取库存预警提醒列表
+ * @returns Promise<any>
+ */
+export function getProductWarehouseWarningList(params?: {
+  page?: number;
+  limit?: number;
+}) {
+  return request({
+    url: '/api/product-warehouses/warning',
+    method: 'get',
+    params,
   })
 }
 

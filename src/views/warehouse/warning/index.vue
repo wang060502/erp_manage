@@ -1,419 +1,328 @@
 <template>
-  <div class="warning-container">
-    <!-- 搜索栏 -->
-    <el-card class="search-card">
-      <el-form :inline="true" :model="searchForm" class="search-form">
-        <el-form-item label="商品名称">
-          <el-input v-model="searchForm.name" placeholder="请输入商品名称" clearable />
-        </el-form-item>
-        <el-form-item label="商品分类">
-          <el-cascader
-            v-model="searchForm.categoryId"
-            :options="categoryOptions"
-            :props="{
-              checkStrictly: true,
-              value: 'id',
-              label: 'name',
-              children: 'children',
-              emitPath: false,
-            }"
-            clearable
-            placeholder="请选择分类"
-          />
-        </el-form-item>
-        <el-form-item label="预警级别">
-          <el-select v-model="searchForm.level" placeholder="请选择预警级别" clearable>
-            <el-option label="紧急" value="urgent" />
-            <el-option label="警告" value="warning" />
-            <el-option label="提示" value="notice" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon>
-            搜索
-          </el-button>
-          <el-button @click="resetSearch">
-            <el-icon><Refresh /></el-icon>
-            重置
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
-    <!-- 操作栏 -->
-    <div class="operation-bar">
-      <el-button type="primary" @click="handleSetting">
-        <el-icon><Setting /></el-icon>
-        预警设置
+  <el-card class="warning-container">
+    <div class="warning-header">
+      <div class="warning-title">库存预警提醒</div>
+      <div class="warning-header-right">
+      <el-switch
+          v-model="autoRefresh"
+          active-text="自动刷新"
+          inactive-text="手动刷新"
+          class="refresh-switch"
+        />
+        <el-button
+        class="refresh-btn"
+        type="primary"
+        :loading="loading"
+        @click="fetchWarningList"
+      >
+        <el-icon><Refresh /></el-icon>
+        刷新
       </el-button>
-      <el-button type="success" @click="handleExport">
-        <el-icon><Download /></el-icon>
-        导出数据
-      </el-button>
+      </div>
     </div>
 
-    <!-- 预警列表 -->
-    <el-card class="table-card">
-      <el-table v-loading="loading" :data="tableData" border>
-        <el-table-column type="index" label="序号" width="60" />
-        <el-table-column label="商品信息" min-width="300">
-          <template #default="{ row }">
-            <div class="product-info">
-              <el-image :src="row.image" class="product-image" />
-              <div class="product-detail">
-                <div class="product-name">{{ row.name }}</div>
-                <div class="product-sku">SKU: {{ row.sku }}</div>
-              </div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="category" label="分类" width="120" />
-        <el-table-column label="库存信息" width="400">
-          <template #default="{ row }">
-            <div class="inventory-info">
-              <div class="inventory-item">
-                <span class="label">当前库存：</span>
-                <span class="value">{{ row.quantity }}</span>
-              </div>
-              <div class="inventory-item">
-                <span class="label">安全库存：</span>
-                <span class="value">{{ row.safetyStock }}</span>
-              </div>
-              <div class="inventory-item">
-                <span class="label">可用库存：</span>
-                <span class="value">{{ row.availableQuantity }}</span>
-              </div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="level" label="预警级别" width="100">
-          <template #default="{ row }">
-            <el-tag
-              :type="
-                row.level === 'urgent' ? 'danger' : row.level === 'warning' ? 'warning' : 'info'
-              "
-            >
-              {{ row.level === 'urgent' ? '紧急' : row.level === 'warning' ? '警告' : '提示' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="lastWarningTime" label="最近预警时间" width="180" />
-        <el-table-column label="操作" width="200" fixed="right">
-          <template #default="{ row }">
-            <el-button-group>
-              <el-button type="primary" link @click="handleDetail(row)"> 详情 </el-button>
-              <el-button type="primary" link @click="handleHistory(row)"> 记录 </el-button>
-            </el-button-group>
-          </template>
-        </el-table-column>
-      </el-table>
+    <div class="warning-count">当前有 <span class="warning-count-number">{{ total }}</span> 个产品预警</div>
 
-      <!-- 分页 -->
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </el-card>
-
-    <!-- 预警设置对话框 -->
-    <el-dialog v-model="settingDialogVisible" title="预警设置" width="600px">
-      <el-form ref="settingFormRef" :model="settingForm" :rules="settingRules" label-width="120px">
-        <el-form-item label="预警方式" prop="methods">
-          <el-checkbox-group v-model="settingForm.methods">
-            <el-checkbox label="email">邮件通知</el-checkbox>
-            <el-checkbox label="sms">短信通知</el-checkbox>
-            <el-checkbox label="system">系统通知</el-checkbox>
-          </el-checkbox-group>
-        </el-form-item>
-        <el-form-item label="预警级别" prop="levels">
-          <el-checkbox-group v-model="settingForm.levels">
-            <el-checkbox label="urgent">紧急</el-checkbox>
-            <el-checkbox label="warning">警告</el-checkbox>
-            <el-checkbox label="notice">提示</el-checkbox>
-          </el-checkbox-group>
-        </el-form-item>
-        <el-form-item label="预警时间" prop="time">
-          <el-time-picker v-model="settingForm.time" format="HH:mm" placeholder="请选择预警时间" />
-        </el-form-item>
-        <el-form-item label="预警周期" prop="cycle">
-          <el-select v-model="settingForm.cycle" placeholder="请选择预警周期">
-            <el-option label="每天" value="daily" />
-            <el-option label="每周" value="weekly" />
-            <el-option label="每月" value="monthly" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="通知接收人" prop="receivers">
-          <el-select
-            v-model="settingForm.receivers"
-            multiple
-            filterable
-            placeholder="请选择通知接收人"
+    <div class="warning-card-list">
+      <div v-for="prod in tableData" :key="prod.product_id" class="warning-card">
+        <div class="warning-card-header">
+          <el-image
+            v-if="prod.product_image"
+            :src="prod.product_image"
+            class="warning-product-image"
+            fit="cover"
+          />
+          <div class="warning-product-info">
+            <div class="warning-product-title">{{ prod.product_title }}</div>
+            <div class="warning-product-meta">
+              <span>SKU: {{ prod.product_sku }}</span>
+              <span class="meta-divider" />
+              <span>分类: {{ prod.product_type }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="warning-detail-table-wrap">
+          <el-table
+            :data="prod.warnings"
+            border
+            size="small"
+            class="warning-detail-table"
+            :header-cell-style="{
+              background: '#f7fafd',
+              color: '#888',
+              fontWeight: 500,
+              fontSize: '14px'
+            }"
+            :cell-style="{
+              fontSize: '15px',
+              padding: '10px 0'
+            }"
+            empty-text="无预警明细"
           >
-            <el-option
-              v-for="item in receiverOptions"
-              :key="item.id"
-              :label="item.name"
-              :value="item.id"
-            />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="settingDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSettingSubmit">确定</el-button>
-        </span>
-      </template>
-    </el-dialog>
-  </div>
+            <el-table-column prop="warehouse_name" label="仓库" min-width="120" />
+            <el-table-column prop="product_size" label="尺码" min-width="80" />
+            <el-table-column prop="stock_quantity" label="库存" min-width="80">
+              <template #default="{ row }">
+                <span :class="['stock-qty', row.stock_quantity <= row.safe_stock_quantity ? 'danger' : '']">
+                  {{ row.stock_quantity }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="safe_stock_quantity" label="安全库存" min-width="100">
+              <template #default="{ row }">
+                <span class="safe-stock">{{ row.safe_stock_quantity }}</span>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </div>
+    </div>
+    <el-pagination
+      v-model:current-page="page"
+      v-model:page-size="pageSize"
+      :total="total"
+      :page-sizes="[10, 20, 50, 100]"
+      layout="total, sizes, prev, pager, next, jumper"
+      background
+      @current-change="fetchWarningList"
+      @size-change="handleSizeChange"
+    />
+  </el-card>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { Search, Refresh, Setting, Download } from '@element-plus/icons-vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { FormInstance, FormRules } from 'element-plus'
+import { getProductWarehouseWarningList } from '@/api/warehouse/inventory'
+import { Refresh } from '@element-plus/icons-vue'
 
-// 搜索表单
-const searchForm = reactive({
-  name: '',
-  categoryId: undefined as number | undefined,
-  level: '',
-})
+interface WarningDetail {
+  id: number
+  warehouse_id: number
+  warehouse_name: string
+  product_size: string
+  stock_quantity: number
+  safe_stock_quantity: number
+}
+interface WarningProduct {
+  product_id: number
+  product_title: string
+  product_sku: string
+  product_image?: string
+  product_type?: string
+  warnings: WarningDetail[]
+}
 
-// 分类选项
-const categoryOptions = ref([
-  {
-    id: 1,
-    name: '电子产品',
-    children: [
-      { id: 11, name: '手机' },
-      { id: 12, name: '电脑' },
-    ],
-  },
-  {
-    id: 2,
-    name: '服装',
-    children: [
-      { id: 21, name: '男装' },
-      { id: 22, name: '女装' },
-    ],
-  },
-])
-
-// 表格数据
+const tableData = ref<WarningProduct[]>([])
 const loading = ref(false)
-const tableData = ref([
-  {
-    id: 1,
-    name: 'iPhone 15 Pro',
-    sku: 'IP15P-256-BLK',
-    category: '电子产品',
-    image: 'https://via.placeholder.com/50',
-    quantity: 5,
-    safetyStock: 50,
-    availableQuantity: 3,
-    level: 'urgent',
-    lastWarningTime: '2024-03-20 10:30:00',
-  },
-  {
-    id: 2,
-    name: 'MacBook Pro',
-    sku: 'MBP-14-M2',
-    category: '电子产品',
-    image: 'https://via.placeholder.com/50',
-    quantity: 15,
-    safetyStock: 30,
-    availableQuantity: 12,
-    level: 'warning',
-    lastWarningTime: '2024-03-19 15:45:00',
-  },
-])
-
-// 分页
-const currentPage = ref(1)
+const page = ref(1)
 const pageSize = ref(10)
-const total = ref(100)
+const total = ref(0)
+const autoRefresh = ref(true)
 
-// 预警设置相关
-const settingDialogVisible = ref(false)
-const settingFormRef = ref<FormInstance>()
-const settingForm = reactive({
-  methods: ['system'],
-  levels: ['urgent', 'warning'],
-  time: new Date(),
-  cycle: 'daily',
-  receivers: [],
-})
+let timer: number | undefined
 
-const settingRules = reactive<FormRules>({
-  methods: [{ required: true, message: '请选择预警方式', trigger: 'change' }],
-  levels: [{ required: true, message: '请选择预警级别', trigger: 'change' }],
-  time: [{ required: true, message: '请选择预警时间', trigger: 'change' }],
-  cycle: [{ required: true, message: '请选择预警周期', trigger: 'change' }],
-  receivers: [{ required: true, message: '请选择通知接收人', trigger: 'change' }],
-})
-
-// 通知接收人选项
-const receiverOptions = ref([
-  { id: 1, name: '张三' },
-  { id: 2, name: '李四' },
-  { id: 3, name: '王五' },
-])
-
-// 搜索
-const handleSearch = () => {
-  console.log('搜索条件：', searchForm)
-  // TODO: 实现搜索逻辑
+const fetchWarningList = async () => {
+  loading.value = true
+  try {
+    const res = await getProductWarehouseWarningList({
+      page: page.value,
+      limit: pageSize.value,
+    })
+    // 兼容 res.data.list 或 res.list
+    const list = (res && (res.data?.list || res.list)) || []
+    tableData.value = list
+    // 兼容 res.data.total 或 res.total
+    total.value = res?.pagination?.total || res?.total || 0
+  } catch {
+    ElMessage.error('获取库存预警数据失败')
+    tableData.value = []
+    total.value = 0
+  } finally {
+    loading.value = false
+  }
 }
 
-// 重置搜索
-const resetSearch = () => {
-  searchForm.name = ''
-  searchForm.categoryId = undefined
-  searchForm.level = ''
-  handleSearch()
-}
-
-// 预警设置
-const handleSetting = () => {
-  settingDialogVisible.value = true
-}
-
-// 预警设置提交
-const handleSettingSubmit = async () => {
-  if (!settingFormRef.value) return
-  await settingFormRef.value.validate((valid) => {
-    if (valid) {
-      // TODO: 实现预警设置保存逻辑
-      ElMessage.success('设置保存成功')
-      settingDialogVisible.value = false
-    }
-  })
-}
-
-// 查看详情
-const handleDetail = (row: any) => {
-  // TODO: 实现查看详情逻辑
-  ElMessage.info(`查看商品"${row.name}"的预警详情`)
-}
-
-// 查看记录
-const handleHistory = (row: any) => {
-  // TODO: 实现查看记录逻辑
-  ElMessage.info(`查看商品"${row.name}"的预警记录`)
-}
-
-// 导出数据
-const handleExport = () => {
-  // TODO: 实现导出逻辑
-  ElMessage.success('开始导出数据')
-}
-
-// 分页大小变化
 const handleSizeChange = (val: number) => {
+  page.value = 1
   pageSize.value = val
-  // TODO: 重新加载数据
+  fetchWarningList()
 }
 
-// 页码变化
-const handleCurrentChange = (val: number) => {
-  currentPage.value = val
-  // TODO: 重新加载数据
+const startAutoRefresh = () => {
+  if (timer) clearInterval(timer)
+  timer = window.setInterval(() => {
+    fetchWarningList()
+  }, 60 * 1000)
+}
+const stopAutoRefresh = () => {
+  if (timer) clearInterval(timer)
+  timer = undefined
+}
+
+// 监听开关变化
+watch(autoRefresh, (val) => {
+  if (val) {
+    startAutoRefresh()
+    ElMessage.success('已开启自动刷新')
+  } else {
+    stopAutoRefresh()
+    ElMessage.info('已切换为手动刷新')
+  }
+})
+
+onMounted(() => {
+  fetchWarningList()
+  if (autoRefresh.value) startAutoRefresh()
+})
+
+onUnmounted(() => {
+  stopAutoRefresh()
+})
+</script>
+
+<script lang="ts">
+export default {
+  name: 'WarehouseWarning',
 }
 </script>
 
 <style scoped>
 .warning-container {
-  padding: 20px;
+  border-radius: 12px;
 }
-
-.search-card {
-  margin-bottom: 20px;
-}
-
-.search-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.operation-bar {
-  margin-bottom: 20px;
-  display: flex;
-  gap: 10px;
-}
-
-.table-card {
-  margin-bottom: 20px;
-}
-
-.product-info {
+.warning-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 24px;
 }
-
-.product-image {
-  width: 50px;
-  height: 50px;
-  border-radius: 4px;
-}
-
-.product-detail {
+.warning-header-right {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
-.product-name {
-  font-weight: bold;
-  color: #303133;
+.warning-card-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
 }
-
-.product-sku {
-  font-size: 12px;
-  color: #909399;
+.warning-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #222;
+  letter-spacing: 1px;
 }
-
-.inventory-info {
+.warning-card {
+  max-width: 400px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px #0001, 0 1.5px 6px #409eff0a;
+  margin-bottom: 32px;
+  padding: 28px 36px 24px 36px;
+  transition: box-shadow 0.2s;
+}
+.warning-card:hover {
+  box-shadow: 0 8px 32px #409eff22, 0 2px 8px #409eff11;
+}
+.warning-card-header {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-bottom: 12px;
+}
+.warning-product-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #f5f7fa;
+  box-shadow: 0 2px 8px #0001;
+  border: 1.5px solid #eaf6ff;
+}
+.warning-product-info {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-
-.inventory-item {
+.warning-product-title {
+  font-weight: 700;
+  font-size: 20px;
+  color: #222;
+  margin-bottom: 2px;
+}
+.warning-product-meta {
+  color: #888;
+  font-size: 14px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
-
-.inventory-item .label {
-  color: #909399;
-  width: 80px;
+.meta-divider {
+  display: inline-block;
+  width: 1px;
+  height: 14px;
+  background: #e0e6ed;
+  margin: 0 10px;
 }
-
-.inventory-item .value {
+.warning-detail-table-wrap {
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fafdff;
+  margin-top: 8px;
+}
+.warning-detail-table {
+  border-radius: 10px;
+  --el-table-border-color: #f0f2f5;
+}
+.stock-qty {
+  font-weight: 600;
+  color: #222;
+  letter-spacing: 1px;
+}
+.stock-qty.danger {
+  color: #f56c6c;
+  background: #fff0f0;
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+.safe-stock {
   color: #409eff;
-  font-weight: bold;
+  font-weight: 500;
 }
-
-.pagination-container {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
+.warning-count {
+  font-size: 18px;
+  font-weight: 600;
+  margin-left: 12px;
+  vertical-align: middle;
+  margin-bottom: 24px;
 }
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+.warning-count-number {
+  font-size: 25px;
+  color: #f56c6c;
+  font-weight: 600;
+}
+.refresh-btn {
+  vertical-align: middle;
+  margin-left: 16px;
+  font-size: 15px;
+}
+.refresh-switch {
+  vertical-align: middle;
+  margin-left: 18px;
+}
+@media (max-width: 900px) {
+  .warning-container {
+    padding: 18px 4vw 18px 4vw;
+  }
+  .warning-card {
+    padding: 18px 10px 16px 10px;
+  }
+  .warning-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
 }
 </style>

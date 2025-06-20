@@ -97,15 +97,27 @@
             </div>
           </div>
           <el-table :data="prod.warehouses" class="inventory-warehouse-table" size="small">
-            <el-table-column prop="warehouse_name" label="仓库" min-width="120" />
-            <el-table-column label="尺码/库存">
+            <el-table-column prop="warehouse_name" label="仓库" min-width="80" />
+            <el-table-column label="库存明细">
               <template #default="{ row }">
-                <div class="inventory-size-list">
-                  <span v-for="stock in row.stocks" :key="stock.id" class="inventory-size-item">
-                    <span class="size">{{ stock.product_size }}</span>
-                    <span class="qty">{{ stock.stock_quantity }}</span>
-                  </span>
-                </div>
+                <el-table
+                  :data="row.stocks"
+                  size="mini"
+                  style=" margin: 0; background: #f9fbfd;"
+                  class="inner-stock-table"
+                  :header-cell-style="{ background: '#f5f7fa', color: '#888', fontWeight: 500, fontSize: '13px' }"
+                >
+                  <el-table-column prop="product_size" label="尺码" min-width="60">
+                    <template #default="{ row }">
+                      <span style="color: #409eff; font-weight: bold;">{{ row.product_size }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="stock_quantity" label="库存" min-width="60">
+                    <template #default="{ row }">
+                      <span style="color: #222;">{{ row.stock_quantity }}</span>
+                    </template>
+                  </el-table-column>
+                </el-table>
               </template>
             </el-table-column>
           </el-table>
@@ -131,6 +143,16 @@
 
     <!-- 新增库存弹窗 -->
     <el-dialog v-model="addDialogVisible" title="新增库存" width="800px">
+      <div class="custom-dialog-header">
+        <div class="header-icon">
+          <el-icon style="font-size: 28px; color: #409eff;"><Plus /></el-icon>
+        </div>
+        <div class="header-content">
+          <div class="header-title">新增库存</div>
+          <div class="header-desc">请填写产品库存明细，支持批量设置安全库存，批量设置仓库</div>
+        </div>
+      </div>
+      <div class="header-divider"></div>
       <!-- 产品自动完成选择区 -->
       <div class="product-search-bar">
         <ProductAutoComplete
@@ -161,6 +183,10 @@
               </div>
             </div>
             <div class="card-actions">
+              <div class="safe-stock-batch-set" style="display: flex; align-items: center; gap: 8px;">
+                <el-input-number v-model="batchSafeStock" :min="0" :controls="false"  placeholder="批量设置安全库存" style="width: 150px;" />
+                <el-button type="primary" @click="setAllSafeStock">应用到全部</el-button>
+              </div>
               <el-select
                 v-model="card.selectedWarehouseId"
                 placeholder="卡片统一选择仓库"
@@ -193,90 +219,109 @@
             </div>
           </div>
           <div class="card-details-flex">
-            <el-row
+            <div
               v-for="(detail, idx) in card.details"
               :key="idx"
-              :gutter="12"
-              class="detail-row-flex"
+              class="detail-row-group"
             >
-              <el-col :span="6">
-                <el-form-item
-                  :prop="`cards.${cardIdx}.details.${idx}.product_size`"
-                  label="尺码"
-                  class="form-item-flex"
-                >
-                  <el-input v-model="detail.product_size" placeholder="尺码" class="input-flex" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="6">
-                <el-form-item
-                  :prop="`cards.${cardIdx}.details.${idx}.stock_quantity`"
-                  label="数量"
-                  class="form-item-flex"
-                >
-                  <el-input-number
-                    v-model.number="detail.stock_quantity"
-                    :min="0"
-                    placeholder="数量"
-                    class="input-flex"
-                  />
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item
-                  :prop="`cards.${cardIdx}.details.${idx}.warehouse_id`"
-                  label="仓库ID"
-                  class="form-item-flex"
-                >
-                  <el-select
-                    v-model.number="detail.warehouse_id"
-                    placeholder="请选择仓库"
-                    :disabled="!!card.selectedWarehouseId"
-                    class="input-flex"
+              <!-- 第一排：尺码、数量 -->
+              <el-row :gutter="12" class="detail-row-flex">
+                <el-col :span="12">
+                  <el-form-item
+                    :prop="`cards.${cardIdx}.details.${idx}.product_size`"
+                    label="尺码"
+                    class="form-item-flex"
                   >
-                    <el-option
-                      v-for="w in warehouseOptions"
-                      :key="w.id"
-                      :label="w.name"
-                      :value="w.id"
+                    <el-input v-model="detail.product_size" placeholder="尺码" class="input-flex" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item
+                    :prop="`cards.${cardIdx}.details.${idx}.stock_quantity`"
+                    label="数量"
+                    class="form-item-flex"
+                  >
+                    <el-input-number
+                      v-model.number="detail.stock_quantity"
+                      :min="0"
+                      placeholder="数量"
+                      class="input-flex"
                     />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="2" class="detail-row-btn-col">
-                <button
-                  class="icon-btn detail-row-add-btn"
-                  @click="addDetailRow(cardIdx)"
-                  title="新增一行"
-                >
-                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                    <circle cx="11" cy="11" r="11" fill="#409EFF" />
-                    <path
-                      d="M11 7V15M7 11H15"
-                      stroke="#fff"
-                      stroke-width="2"
-                      stroke-linecap="round"
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <!-- 第二排：安全库存、仓库、操作按钮 -->
+              <el-row :gutter="12" class="detail-row-flex">
+                <el-col :span="8">
+                  <el-form-item
+                    :prop="`cards.${cardIdx}.details.${idx}.safe_stock_quantity`"
+                    label="安全库存"
+                    class="form-item-flex"
+                  >
+                    <el-input-number
+                      v-model.number="detail.safe_stock_quantity"
+                      :min="0"
+                      placeholder="安全库存"
+                      class="input-flex"
                     />
-                  </svg>
-                </button>
-                <button
-                  v-if="card.details.length > 1"
-                  class="icon-btn detail-row-delete-btn"
-                  @click="removeDetailRow(cardIdx, idx)"
-                  title="删除本行"
-                >
-                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                    <circle cx="11" cy="11" r="11" fill="#F56C6C" />
-                    <path
-                      d="M7.5 7.5L14.5 14.5M14.5 7.5L7.5 14.5"
-                      stroke="#fff"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                    />
-                  </svg>
-                </button>
-              </el-col>
-            </el-row>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item
+                    :prop="`cards.${cardIdx}.details.${idx}.warehouse_id`"
+                    label="仓库ID"
+                    class="form-item-flex"
+                  >
+                    <el-select
+                      v-model.number="detail.warehouse_id"
+                      placeholder="请选择仓库"
+                      :disabled="!!card.selectedWarehouseId"
+                      class="input-flex"
+                    >
+                      <el-option
+                        v-for="w in warehouseOptions"
+                        :key="w.id"
+                        :label="w.name"
+                        :value="w.id"
+                      />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="4" class="detail-row-btn-col">
+                  <button
+                    class="icon-btn detail-row-add-btn"
+                    @click="addDetailRow(cardIdx)"
+                    title="新增一行"
+                  >
+                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                      <circle cx="11" cy="11" r="11" fill="#409EFF" />
+                      <path
+                        d="M11 7V15M7 11H15"
+                        stroke="#fff"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    v-if="card.details.length > 1"
+                    class="icon-btn detail-row-delete-btn"
+                    @click="removeDetailRow(cardIdx, idx)"
+                    title="删除本行"
+                  >
+                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                      <circle cx="11" cy="11" r="11" fill="#F56C6C" />
+                      <path
+                        d="M7.5 7.5L14.5 14.5M14.5 7.5L7.5 14.5"
+                        stroke="#fff"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                      />
+                    </svg>
+                  </button>
+                </el-col>
+              </el-row>
+            </div>
           </div>
         </el-card>
         <div v-if="!productCards.length" style="color: #aaa; text-align: center; margin: 30px 0">
@@ -320,6 +365,16 @@
               :precision="0"
               size="small"
               @change="handleStockQuantityChange(row)"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column label="安全库存" min-width="120">
+          <template #default="{ row }">
+            <el-input-number
+              v-model="row.safe_stock_quantity"
+              :min="0"
+              :precision="0"
+              size="small"
             />
           </template>
         </el-table-column>
@@ -401,14 +456,34 @@
         </div>
         <el-table :data="detailProduct.warehouses" border>
           <el-table-column prop="warehouse_name" label="仓库" min-width="120" />
-          <el-table-column label="尺码/库存">
+          <el-table-column label="库存明细">
             <template #default="{ row }">
-              <div class="inventory-size-list">
-                <span v-for="stock in row.stocks" :key="stock.id" class="inventory-size-item">
-                  <span class="size">{{ stock.product_size }}</span>
-                  <span class="qty">{{ stock.stock_quantity }}</span>
-                </span>
-              </div>
+              <el-table
+                :data="row.stocks"
+                size="mini"
+                border
+                style="width: 100%; margin: 0; background: #f9fbfd;"
+                class="inner-stock-table"
+                :header-cell-style="{ background: '#f5f7fa', color: '#888', fontWeight: 500, fontSize: '13px' }"
+              >
+                <el-table-column prop="product_size" label="尺码" min-width="60">
+                  <template #default="{ row }">
+                    <span style="color: #409eff; font-weight: bold;">{{ row.product_size }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="stock_quantity" label="库存" min-width="60">
+                  <template #default="{ row }">
+                    <span style="color: #222;">{{ row.stock_quantity }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="safe_stock_quantity" label="安全库存" min-width="80">
+                  <template #default="{ row }">
+                    <span :style="{ color: row.safe_stock_quantity > 0 ? '#f56c6c' : '#bbb' }">
+                      {{ row.safe_stock_quantity }}
+                    </span>
+                  </template>
+                </el-table-column>
+              </el-table>
             </template>
           </el-table-column>
         </el-table>
@@ -489,6 +564,7 @@ const fetchWarehouses = async () => {
 const addDialogVisible = ref(false)
 const selectedProduct = ref<ProductSearchResult | null>(null)
 const productCards = ref<ProductCard[]>([])
+const batchSafeStock = ref<number | null>(null)
 
 const handleProductSelect = (prod: ProductSearchResult) => {
   if (!prod) return
@@ -496,7 +572,7 @@ const handleProductSelect = (prod: ProductSearchResult) => {
   if (productCards.value.some((card) => card.product.product_id === prod.product_id)) return
   productCards.value.push({
     product: prod,
-    details: [{ product_size: '', stock_quantity: 0, warehouse_id: undefined }],
+    details: [{ product_size: '', stock_quantity: 0, warehouse_id: undefined, safe_stock_quantity: 0 }],
     selectedWarehouseId: null,
   })
   selectedProduct.value = null
@@ -518,6 +594,7 @@ const addDetailRow = (cardIdx: number) => {
     stock_quantity: 0,
     warehouse_id:
       typeof card.selectedWarehouseId === 'number' ? card.selectedWarehouseId : undefined,
+    safe_stock_quantity: 0,
   })
 }
 
@@ -537,6 +614,7 @@ const handleAddSubmit = async () => {
       product_size: detail.product_size,
       stock_quantity: detail.stock_quantity,
       warehouse_id: detail.warehouse_id,
+      safe_stock_quantity: detail.safe_stock_quantity,
     })),
   )
   if (!items.length) {
@@ -556,6 +634,7 @@ const handleAddSubmit = async () => {
       product_size: string
       stock_quantity: number
       warehouse_id: number
+      safe_stock_quantity: number
     }>,
   )
   ElMessage.success('新增成功')
@@ -598,7 +677,7 @@ const resetSearch = () => {
 // 产品卡片结构
 interface ProductCard {
   product: ProductSearchResult
-  details: Array<{ product_size: string; stock_quantity: number; warehouse_id: number | undefined }>
+  details: Array<{ product_size: string; stock_quantity: number; warehouse_id: number | undefined; safe_stock_quantity: number }>
   selectedWarehouseId?: number | null
 }
 
@@ -621,6 +700,7 @@ const batchEditItems = ref<
     warehouse_name: string
     product_size: string
     stock_quantity: number
+    safe_stock_quantity: number
   }>
 >([])
 
@@ -635,6 +715,7 @@ const openBatchEditDialog = (prod: Product) => {
       warehouse_name: warehouse.warehouse_name,
       product_size: stock.product_size,
       stock_quantity: stock.stock_quantity,
+      safe_stock_quantity: stock.safe_stock_quantity,
     })),
   )
   batchEditDialogVisible.value = true
@@ -656,6 +737,7 @@ const handleBatchEditSubmit = async () => {
         product_size: item.product_size,
         warehouse_id: item.warehouse_id,
         stock_quantity: item.stock_quantity,
+        safe_stock_quantity: item.safe_stock_quantity,
       }
       // 如果有id，说明是更新已有记录，需要包含id
       if (item.id) {
@@ -683,11 +765,13 @@ const newBatchEditItem = reactive<{
   warehouse_id: number | undefined
   product_size: string
   stock_quantity: number
+  safe_stock_quantity: number
 }>({
   product_id: 0,
   warehouse_id: undefined,
   product_size: '',
   stock_quantity: 0,
+  safe_stock_quantity: 0,
 })
 
 function openAddBatchEditItemDialog() {
@@ -700,6 +784,7 @@ function openAddBatchEditItemDialog() {
   newBatchEditItem.warehouse_id = undefined
   newBatchEditItem.product_size = ''
   newBatchEditItem.stock_quantity = 0
+  newBatchEditItem.safe_stock_quantity = 0
   addBatchEditItemDialogVisible.value = true
 }
 
@@ -716,6 +801,7 @@ function addBatchEditItem() {
       warehouse_name: w.name,
       product_size: newBatchEditItem.product_size,
       stock_quantity: newBatchEditItem.stock_quantity,
+      safe_stock_quantity: newBatchEditItem.safe_stock_quantity,
     })
   }
   addBatchEditItemDialogVisible.value = false
@@ -758,6 +844,15 @@ const detailProduct = ref<Product | null>(null)
 function openDetailDialog(prod: Product) {
   detailProduct.value = prod
   detailDialogVisible.value = true
+}
+
+function setAllSafeStock() {
+  if (batchSafeStock.value === null || batchSafeStock.value < 0) return
+  productCards.value.forEach(card => {
+    card.details.forEach(detail => {
+      detail.safe_stock_quantity = batchSafeStock.value!
+    })
+  })
 }
 
 onMounted(() => {
@@ -890,6 +985,15 @@ export default {
 .card-details-flex {
   padding: 10px 32px 0 32px;
 }
+.detail-row-group {
+  margin-bottom: 12px;
+  border-bottom: 1px solid #ececec;
+  padding-bottom: 12px;
+}
+.detail-row-group:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
 .detail-row-flex {
   margin-bottom: 8px;
   align-items: center;
@@ -999,5 +1103,50 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+.inner-stock-table {
+  margin-top: 6px;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px #0001;
+}
+.safe-stock-batch-set {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.custom-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0 8px 0;
+}
+.header-icon {
+  width: 44px;
+  height: 44px;
+  background: #eaf6ff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.header-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #222;
+}
+.header-desc {
+  font-size: 13px;
+  color: #888;
+}
+.header-divider {
+  height: 1px;
+  background: #f0f2f5;
+  margin-bottom: 18px;
 }
 </style>

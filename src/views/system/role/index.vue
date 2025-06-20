@@ -37,10 +37,10 @@
         <el-icon><Plus /></el-icon>
         新增角色
       </el-button>
-      <el-button type="success" @click="handleExport">
+      <!-- <el-button type="success" @click="handleExport">
         <el-icon><Download /></el-icon>
         导出数据
-      </el-button>
+      </el-button> -->
     </div>
 
     <!-- 角色列表 -->
@@ -334,7 +334,9 @@ const handlePermission = async (row: (typeof tableData.value)[0]) => {
   currentRoleId.value = row.id
   await fetchMenuTree()
   const res = await getRoleMenus(row.id)
-  checkedPermissions.value = extractMenuIds(res.menus || [])
+  console.log('已分配权限',res);
+
+  checkedPermissions.value = extractLeafMenuIds(res.menus || [])
 }
 
 // 提交权限设置
@@ -468,12 +470,13 @@ const getDataScopeTag = (scope: number) => {
   }
 }
 
-function extractMenuIds(menus: MenuItem[]): number[] {
+function extractLeafMenuIds(menus: MenuItem[]): number[] {
   let ids: number[] = []
   for (const menu of menus) {
-    ids.push(menu.menu_id)
-    if (menu.children && menu.children.length > 0) {
-      ids = ids.concat(extractMenuIds(menu.children))
+    if (!menu.children || menu.children.length === 0) {
+      ids.push(menu.menu_id)
+    } else {
+      ids = ids.concat(extractLeafMenuIds(menu.children))
     }
   }
   return ids

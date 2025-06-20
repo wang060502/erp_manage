@@ -94,7 +94,7 @@
         <el-table-column prop="create_time" label="更新时间" width="180">
           <template #default="{ row }">
             <span v-if="row.update_time === null">暂未更新</span>
-            <span v-else>{{ dayjs(row.update_time).format('YYYY-MM-DD HH:mm:ss') }}</span>
+            <span v-else>{{ row.update_time.replace('T', ' ').replace(/\.\d+Z?$/, '') }}</span>
           </template>
         </el-table-column>
 
@@ -212,9 +212,9 @@
           <h4>备注</h4>
           <p>{{ currentProduct.remark || '暂无备注' }}</p>
           <h4>时间信息</h4>
-          <p>创建时间: {{ dayjs(currentProduct.create_time).format('YYYY-MM-DD HH:mm:ss') }}</p>
+          <p>创建时间: {{ currentProduct.create_time.replace('T', ' ').replace(/\.\d+Z?$/, '') }}</p>
           <p v-if="currentProduct.update_time">
-            更新时间: {{ dayjs(currentProduct.update_time).format('YYYY-MM-DD HH:mm:ss') }}
+            更新时间: {{ currentProduct.update_time.replace('T', ' ').replace(/\.\d+Z?$/, '') }}
           </p>
           <p v-if="!currentProduct.update_time">更新时间: 暂未更新</p>
         </div>

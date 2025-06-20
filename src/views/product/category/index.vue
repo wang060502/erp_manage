@@ -26,7 +26,7 @@
         </el-table-column>
         <el-table-column prop="create_time" label="创建时间" width="180">
           <template #default="{ row }">
-            {{ dayjs(row.create_time).format('YYYY-MM-DD HH:mm:ss') }}
+            {{ row.create_time.replace('T', ' ').replace(/\.\d+Z?$/, '') }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">

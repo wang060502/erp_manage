@@ -14,9 +14,11 @@ export function addSalesRecord(data: {
     unit_price: number
     total_price: number
     remark: string
+    product_warehouse_id: number
   }>
   sales_time: string
-  creator: number
+  payment_status?: string
+  payment_image?: string
 }) {
   return request({
     url: '/api/sales-records',
@@ -57,3 +59,65 @@ export function deleteSalesRecordByCustomerAndTime(customerId: number, salesTime
     method: 'delete',
   })
 }
+
+/**
+ * 批量修改销售记录的付款状态
+ * @param recordIds 销售记录ID数组
+ * @param payment_status 新的付款状态
+ * @returns Promise<any>
+ */
+export function updateSalesRecordPaymentStatus(recordIds: number[], payment_status: string) {
+  return request({
+    url: '/api/sales-records/payment-status',
+    method: 'patch',
+    data: {
+      record_ids: recordIds,
+      payment_status,
+    },
+  })
+}
+
+/**
+ * 查询所有销售记录列表
+ * @param params 查询参数
+ * @returns Promise<any>
+ */
+export function getAllSalesRecords(params: {
+  creator?: number
+  payment_status?: string
+  start_time?: string
+  end_time?: string
+  warehouse_id?: number
+  warehouse_name?: string
+  page?: number
+  limit?: number
+}) {
+  return request({
+    url: '/api/sales-records',
+    method: 'get',
+    params,
+  })
+}
+
+/**
+ * 导出销售记录列表到CSV
+ * @param params 查询参数，支持 creator, payment_status, start_time, end_time, warehouse_id, warehouse_name, page, limit
+ * @returns Promise<Blob>
+ */
+export function exportSalesRecordsToCSV(params: {
+  creator?: number
+  payment_status?: string
+  start_time?: string
+  end_time?: string
+  warehouse_id?: number
+  warehouse_name?: string
+  page?: number
+  limit?: number
+}) {
+  return request({
+    url: '/api/sales-records/export',
+    method: 'get',
+    params
+  })
+}
+

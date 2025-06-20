@@ -3,17 +3,21 @@
     <!-- 侧边栏 -->
     <div class="sidebar-container">
       <div class="logo-container">
-        <h1 class="logo-title" v-show="!isCollapse">ERP System</h1>
-        <h1 class="logo-title" v-show="isCollapse">ERP</h1>
+        <h1 class="logo-title" v-show="!isCollapse">跨境仓储 ERP 系统</h1>
+        <h1 class="logo-title" v-show="isCollapse">
+          <img src="@/assets/ERP.png" alt="logo" class="logo-img" />
+        </h1>
       </div>
       <el-menu
         class="sidebar-menu"
         :default-active="activeMenu"
-        background-color="#304156"
-        text-color="#bfcbd9"
-        active-text-color="#409EFF"
+        text-color="black"
+        active-text-color="rgba(64, 158, 255)"
+        active-background-color="rgba(236, 245, 255)"
         :collapse="isCollapse"
         :unique-opened="true"
+        collapse-close-icon="ArrowDown"
+        collapse-open-icon="ArrowUp"
         router
       >
         <!-- 首页 -->
@@ -21,6 +25,22 @@
           <el-icon><HomeFilled /></el-icon>
           <span>首页</span>
         </el-menu-item>
+
+        <!-- 通知管理 -->
+        <el-sub-menu index="notice">
+          <template #title>
+            <el-icon><Bell /></el-icon>
+            <span>通知管理</span>
+          </template>
+          <el-menu-item index="/notice/list">
+            <el-icon><List /></el-icon>
+            <span>通知列表</span>
+          </el-menu-item>
+          <el-menu-item index="/notice/my">
+            <el-icon><Message /></el-icon>
+            <span>我的通知</span>
+          </el-menu-item>
+        </el-sub-menu>
 
         <!-- 商品管理 -->
         <el-sub-menu index="product">
@@ -99,6 +119,10 @@
           <el-menu-item index="/customer/analysis">
             <el-icon><DataLine /></el-icon>
             <span>客户分析</span>
+          </el-menu-item>
+          <el-menu-item index="/customer/salelist">
+            <el-icon><List /></el-icon>
+            <span>销售列表</span>
           </el-menu-item>
         </el-sub-menu>
 
@@ -348,6 +372,11 @@ onMounted(async () => {
   border-radius: 50%;
 }
 
+.logo-img {
+  width: 32px;
+  height: 32px;
+}
+
 .avatar-pro {
   width: 76px;
   height: 76px;
@@ -376,7 +405,7 @@ onMounted(async () => {
 .sidebar-container {
   width: 240px;
   height: 100%;
-  background-color: #304156;
+  /* background-color: #304156; */
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
   transform: translateZ(0);
@@ -393,11 +422,10 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #2b3649;
 }
 
 .logo-title {
-  color: #fff;
+  color: black;
   font-size: 18px;
   font-weight: 600;
   margin: 0;
@@ -405,6 +433,7 @@ onMounted(async () => {
 }
 
 .sidebar-menu {
+  border-top: 1px solid #e0e7ef;
   border-right: none;
 }
 

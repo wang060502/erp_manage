@@ -24,6 +24,23 @@ const router = createRouter({
             icon: 'User',
           },
         },
+       // 通知管理
+       {
+        path: '/notice/list',
+        component: () => import('@/views/notice/list.vue'),
+        meta: {
+          title: '通知列表',
+          icon: 'Bell',
+        },
+      },
+      {
+        path: '/notice/my',
+        component: () => import('@/views/notice/my.vue'),
+        meta: {
+          title: '我的通知',
+          icon: 'Message',
+        },
+      },
         // 商品管理
         {
           path: '/product',
@@ -156,6 +173,14 @@ const router = createRouter({
               meta: {
                 title: '客户分析',
                 icon: 'DataLine',
+              },
+            },
+            {
+              path: 'salelist',
+              component: () => import('@/views/customer/salelist/index.vue'),
+              meta: {
+                title: '销售列表',
+                icon: 'List',
               },
             },
           ],

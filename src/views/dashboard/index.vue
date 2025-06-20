@@ -1,162 +1,163 @@
 <template>
-  <div class="dashboard-container">
-    <el-row :gutter="20">
-      <el-col :span="6">
-        <el-card shadow="hover" class="data-card">
-          <template #header>
-            <div class="card-header">
-              <span>总销售额</span>
-              <el-tag size="small" type="success">+12.5%</el-tag>
-            </div>
-          </template>
-          <div class="card-value">¥ 128,930</div>
-          <div class="card-footer">
-            <span>日同比</span>
-            <span class="up">+12.5%</span>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="data-card">
-          <template #header>
-            <div class="card-header">
-              <span>订单量</span>
-              <el-tag size="small" type="success">+8.2%</el-tag>
-            </div>
-          </template>
-          <div class="card-value">1,234</div>
-          <div class="card-footer">
-            <span>日同比</span>
-            <span class="up">+8.2%</span>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="data-card">
-          <template #header>
-            <div class="card-header">
-              <span>库存量</span>
-              <el-tag size="small" type="warning">-2.1%</el-tag>
-            </div>
-          </template>
-          <div class="card-value">8,562</div>
-          <div class="card-footer">
-            <span>日同比</span>
-            <span class="down">-2.1%</span>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="data-card">
-          <template #header>
-            <div class="card-header">
-              <span>客户数</span>
-              <el-tag size="small" type="success">+5.6%</el-tag>
-            </div>
-          </template>
-          <div class="card-value">3,456</div>
-          <div class="card-footer">
-            <span>日同比</span>
-            <span class="up">+5.6%</span>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <el-row :gutter="20" class="mt-20">
-      <el-col :span="16">
-        <el-card shadow="hover">
-          <template #header>
-            <div class="card-header">
-              <span>销售趋势</span>
-              <el-radio-group v-model="salesType" size="small">
-                <el-radio-button label="amount">销售额</el-radio-button>
-                <el-radio-button label="count">订单量</el-radio-button>
-              </el-radio-group>
-            </div>
-          </template>
-          <div class="chart-container">
-            <!-- 这里将添加销售趋势图表 -->
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card shadow="hover">
-          <template #header>
-            <div class="card-header">
-              <span>库存预警</span>
-            </div>
-          </template>
-          <el-table :data="stockWarnings" style="width: 100%" size="small">
-            <el-table-column prop="name" label="商品名称" />
-            <el-table-column prop="stock" label="库存" width="80" />
-            <el-table-column prop="status" label="状态" width="80">
-              <template #default="{ row }">
-                <el-tag :type="row.status === '紧急' ? 'danger' : 'warning'" size="small">
-                  {{ row.status }}
-                </el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-col>
-    </el-row>
-  </div>
+  <el-card class="dashboard-container">
+    <el-dialog
+      v-model="showUnreadDialog"
+      title="未读通知提醒"
+      width="340px"
+      :close-on-click-modal="false"
+      :show-close="true"
+    >
+      <div style="font-size: 16px; color: #e6a23c; text-align: center;">
+        您有 <b style="font-size: 22px; color: #f56c6c;">{{ unreadCount }}</b> 条未读通知，请及时处理！
+      </div>
+      <template #footer>
+        <el-button type="primary" @click="snooze">暂不提醒（1小时）</el-button>
+        <el-button type="primary" @click="goToNoticePage">去处理</el-button>
+      </template>
+    </el-dialog>
+  </el-card>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue';
+import { getUnreadNotificationCount } from '@/api/notice';
+import { useRouter } from 'vue-router';
 
-const salesType = ref('amount')
+const router = useRouter();
 
-// 模拟库存预警数据
-const stockWarnings = [
-  { name: 'iPhone 15 Pro', stock: 5, status: '紧急' },
-  { name: 'MacBook Pro', stock: 8, status: '警告' },
-  { name: 'AirPods Pro', stock: 10, status: '警告' },
-]
+const showUnreadDialog = ref(false);
+const unreadCount = ref(0);
+const SNOOZE_KEY = 'unread_notice_snooze_until';
+
+const snooze = () => {
+  showUnreadDialog.value = false;
+  const until = Date.now() + 60 * 60 * 1000; // 1小时后
+  localStorage.setItem(SNOOZE_KEY, until.toString());
+};
+
+const checkUnreadNotifications = async () => {
+  try {
+    const snoozeUntil = parseInt(localStorage.getItem(SNOOZE_KEY) || '0', 10);
+    if (snoozeUntil > Date.now()) return;
+    const res = await getUnreadNotificationCount();
+    const count = res.data?.unread_count ?? 0;
+    if (count > 0) {
+      unreadCount.value = count;
+      showUnreadDialog.value = true;
+    }
+  } catch {
+    // 可选：忽略错误或提示
+  }
+};
+
+const goToNoticePage = () => {
+  showUnreadDialog.value = false;
+  router.push('/notice/my');
+};
+
+onMounted(() => {
+  checkUnreadNotifications();
+});
 </script>
 
 <style scoped>
 .dashboard-container {
-  padding: 20px;
+  border-radius: 16px;
+  background: #f8fafc;
+  min-height: 100vh;
+  box-shadow: 0 2px 16px 0 rgba(64,158,255,0.04);
 }
-
-.mt-20 {
-  margin-top: 20px;
+.dashboard-hero {
+  text-align: center;
+  margin-top: 32px;
+  margin-bottom: 32px;
 }
-
-.data-card {
-  height: 160px;
-}
-
-.card-header {
+.dashboard-hero-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #409EFF;
+  letter-spacing: 2px;
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.dashboard-logo {
+  font-size: 36px;
+}
+.dashboard-hero-desc {
+  font-size: 18px;
+  color: #222;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.dashboard-hero-welcome {
+  color: #888;
+  font-size: 15px;
+  margin-bottom: 0;
+}
+.dashboard-main-row {
+  margin-top: 12px;
+}
+.intro-card, .guide-card {
+  border-radius: 16px;
+  min-height: 340px;
+  box-shadow: 0 4px 24px 0 rgba(64,158,255,0.08);
+  background: linear-gradient(135deg, #fafdff 0%, #f3f8ff 100%);
+  border: none;
+}
+.gradient-card {
+  transition: box-shadow 0.3s;
+}
+.gradient-card:hover {
+  box-shadow: 0 8px 32px 0 rgba(64,158,255,0.16);
+}
+.intro-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
   align-items: center;
 }
-
-.card-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: #303133;
-  margin: 10px 0;
+.intro-content {
+  font-size: 15px;
+  color: #444;
+  line-height: 1.8;
 }
-
-.card-footer {
-  font-size: 14px;
-  color: #909399;
+.intro-list {
+  margin-top: 12px;
+  padding-left: 0;
+  list-style: none;
 }
-
-.up {
-  color: #67c23a;
+.intro-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 15px;
 }
-
-.down {
-  color: #f56c6c;
+.el-steps {
+  margin-top: 8px;
 }
-
-.chart-container {
-  height: 400px;
+@media (max-width: 900px) {
+  .dashboard-main-row {
+    flex-direction: column;
+  }
+  .intro-card, .guide-card {
+    min-height: 0;
+    margin-bottom: 16px;
+  }
+  .dashboard-hero-title {
+    font-size: 22px;
+  }
+}
+:deep(.el-step__description) {
+  color: #595959 !important;
+  font-size: 15px;
+}
+:deep(.el-step__title) {
+  color: #222 !important;
+  font-weight: 600;
 }
 </style>

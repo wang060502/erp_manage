@@ -262,78 +262,123 @@
     <!-- 客户详情对话框 -->
     <el-dialog
       v-model="detailDialogVisible"
-      title="客户详情"
       width="600px"
       :close-on-click-modal="false"
+      class="customer-detail-dialog"
     >
-      <el-descriptions :column="1" border>
-        <el-descriptions-item label="客户名称">{{ detailData.customer_name }}</el-descriptions-item>
-        <el-descriptions-item label="客户状态">
-          <el-tag
-            :type="
-              detailData.customer_status === '成交客户'
-                ? 'warning'
-                : detailData.customer_status === '潜在客户'
-                  ? 'info'
-                  : detailData.customer_status === '战略合作'
-                    ? 'success'
-                    : detailData.customer_status === '无效客户'
-                      ? 'danger'
-                      : 'default'
-            "
-            effect="light"
-          >
-            {{ detailData.customer_status }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="客户级别">
-          <el-tag
-            :type="detailData.customer_level === '重要客户' ? 'danger' : 'success'"
-            effect="light"
-          >
-            {{ detailData.customer_level }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="付款状态">
-          <el-tag
-            :type="
-              detailData.payment_status === '已结清'
-                ? 'success'
-                : detailData.payment_status === '已付款部分'
+      <template #header>
+        <div class="detail-header">
+          <div class="avatar-area">
+            <el-avatar
+              :size="56"
+              :src="detailData.avatar || ''"
+              v-if="detailData.avatar"
+            />
+            <div v-else class="avatar-placeholder">
+              {{ detailData.customer_name?.charAt(0) || '客' }}
+            </div>
+          </div>
+          <div class="header-info">
+            <div class="customer-title">{{ detailData.customer_name }}</div>
+            <div class="customer-subtitle">
+              {{ detailData.customer_level }} · {{ detailData.customer_status }}
+            </div>
+          </div>
+        </div>
+      </template>
+      <div class="detail-section">
+        <div class="section-title">基础信息</div>
+        <div class="base-info-list">
+          <div class="base-info-row">
+            <span class="base-info-label">客户来源</span>
+            <span class="base-info-value">{{ detailData.customer_source }}</span>
+          </div>
+          <div class="base-info-row">
+            <span class="base-info-label">客户地址</span>
+            <span class="base-info-value">{{ detailData.customer_address }}</span>
+          </div>
+          <div class="base-info-row">
+            <span class="base-info-label">创建者</span>
+            <span class="base-info-value">{{ detailData.creator_name }}</span>
+          </div>
+          <div class="base-info-row">
+            <span class="base-info-label">创建时间</span>
+            <span class="base-info-value">
+              {{ detailData.create_time ? detailData.create_time.replace('T', ' ').replace(/\.\d+Z?$/, '') : '' }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <div class="section-title">业务信息</div>
+        <div class="base-info-list">
+          <div class="base-info-row">
+            <span class="base-info-label">成交金额</span>
+            <span class="base-info-value deal-price">${{ detailData.deal_price }}</span>
+          </div>
+          <div class="base-info-row">
+            <span class="base-info-label">客户详情</span>
+            <span class="base-info-value">{{ detailData.customer_detail }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <div class="section-title">状态信息</div>
+        <div class="base-info-list">
+          <div class="base-info-row">
+            <span class="base-info-label">客户状态</span>
+            <span class="base-info-value">
+              <el-tag
+                :type="detailData.customer_status === '成交客户'
                   ? 'warning'
-                  : detailData.payment_status === '待付款'
+                  : detailData.customer_status === '潜在客户'
                     ? 'info'
-                    : 'default'
-            "
-            effect="light"
-          >
-            {{ detailData.payment_status }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="客户来源">{{
-          detailData.customer_source
-        }}</el-descriptions-item>
-        <el-descriptions-item label="客户地址">{{
-          detailData.customer_address
-        }}</el-descriptions-item>
-        <el-descriptions-item label="客户详情">{{
-          detailData.customer_detail
-        }}</el-descriptions-item>
-        <el-descriptions-item label="成交金额">{{ detailData.deal_price }}</el-descriptions-item>
-        <el-descriptions-item label="创建者">{{ detailData.creator_name }}</el-descriptions-item>
-        <el-descriptions-item label="创建时间">
-          {{
-            detailData.create_time
-              ? detailData.create_time.replace('T', ' ').replace(/\.\d+Z?$/, '')
-              : ''
-          }}
-        </el-descriptions-item>
-        <el-descriptions-item label="状态">
-          <el-tag :type="detailData.status === 1 ? 'success' : 'info'">
-            {{ detailData.status === 1 ? '启用' : '禁用' }}
-          </el-tag>
-        </el-descriptions-item>
-      </el-descriptions>
+                    : detailData.customer_status === '战略合作'
+                      ? 'success'
+                      : detailData.customer_status === '无效客户'
+                        ? 'danger'
+                        : 'default'"
+              >
+                {{ detailData.customer_status }}
+              </el-tag>
+            </span>
+          </div>
+          <div class="base-info-row">
+            <span class="base-info-label">客户级别</span>
+            <span class="base-info-value">
+              <el-tag
+                :type="detailData.customer_level === '重要客户' ? 'danger' : 'success'"
+              >
+                {{ detailData.customer_level }}
+              </el-tag>
+            </span>
+          </div>
+          <div class="base-info-row">
+            <span class="base-info-label">付款状态</span>
+            <span class="base-info-value">
+              <el-tag
+                :type="detailData.payment_status === '已结清'
+                  ? 'success'
+                  : detailData.payment_status === '已付款部分'
+                    ? 'warning'
+                    : detailData.payment_status === '待付款'
+                      ? 'info'
+                      : 'default'"
+              >
+                {{ detailData.payment_status }}
+              </el-tag>
+            </span>
+          </div>
+          <div class="base-info-row">
+            <span class="base-info-label">状态</span>
+            <span class="base-info-value">
+              <el-tag :type="detailData.status === 1 ? 'success' : 'info'">
+                {{ detailData.status === 1 ? '启用' : '禁用' }}
+              </el-tag>
+            </span>
+          </div>
+        </div>
+      </div>
       <template #footer>
         <el-button @click="detailDialogVisible = false">关闭</el-button>
       </template>
@@ -350,7 +395,7 @@
       </div>
       <div v-for="(order, oIdx) in salesOrders" :key="oIdx" class="order-block">
         <div class="order-header">
-          <span>销售时间：{{ dayjs(order.sales_time).format('YYYY-MM-DD HH:mm:ss') }}</span>
+          <span>销售时间：{{ order.sales_time ? order.sales_time.replace('T', ' ').replace(/\.\d+Z?$/, '') : '' }}</span>
           <span>总金额：${{ order.total_amount }}</span>
           <span>创建人：{{ order.creator_name }}</span>
           <el-button
@@ -358,8 +403,36 @@
             size="small"
             @click="handleDeleteSalesRecord(order)"
             style="margin-left: auto"
-            >删除</el-button
-          >
+          >删除</el-button>
+        </div>
+        <div class="order-sub-header">
+          <span>付款状态：
+            <el-select
+              v-model="order.payment_status"
+              placeholder="请选择付款状态"
+              size="small"
+              style="width: 120px"
+              @change="val => handleUpdatePaymentStatus(order, val)"
+              :disabled="order.updatingPaymentStatus"
+            >
+              <el-option
+                v-for="item in paymentStatusOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+            <el-icon v-if="order.updatingPaymentStatus" class="is-loading" style="margin-left: 4px;"><Loading /></el-icon>
+          </span>
+          <span v-if="order.payment_image">
+            <span>付款凭证：</span>
+            <el-image
+              :src="order.payment_image"
+              style="width: 40px; height: 40px; margin-left: 8px; vertical-align: middle"
+              :preview-src-list="[order.payment_image]"
+              fit="cover"
+            />
+          </span>
         </div>
         <el-table :data="order.products" size="small" class="order-products-table">
           <el-table-column label="图片" width="60">
@@ -373,6 +446,7 @@
           <el-table-column prop="quantity" label="数量" width="60" />
           <el-table-column prop="unit_price" label="单价" width="80" />
           <el-table-column prop="total_price" label="总价" width="80" />
+          <el-table-column prop="warehouse_name" label="仓库" min-width="120" />
           <el-table-column prop="remark" label="备注" min-width="120">
             <template #default="{ row }">
               <el-tooltip v-if="row.remark" :content="row.remark" placement="top" effect="dark">
@@ -423,6 +497,34 @@
             placeholder="选择销售时间"
             style="width: 100%"
           />
+        </el-form-item>
+        <el-form-item label="付款状态" prop="payment_status">
+          <el-select v-model="addSalesRecordForm.payment_status" placeholder="请选择付款状态">
+            <el-option v-for="item in paymentStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="支付凭证" prop="payment_image">
+          <el-upload
+            class="payment-image-uploader"
+            :show-file-list="false"
+            :before-upload="beforeUploadPaymentImage"
+            :on-change="handlePaymentImageChange"
+            :http-request="customUploadPaymentImage"
+            accept="image/*"
+          >
+            <div class="payment-image-upload-area">
+              <img
+                v-if="addSalesRecordForm.payment_image"
+                :src="addSalesRecordForm.payment_image"
+                class="payment-image-preview"
+              />
+              <div v-else class="payment-upload-placeholder">
+                <el-icon style="font-size: 40px;"><Plus /></el-icon>
+                <div style="margin-top: 8px;">上传图片</div>
+              </div>
+              <div v-if="addSalesRecordForm.payment_image" class="change-image-tip">点击更换</div>
+            </div>
+          </el-upload>
         </el-form-item>
         <el-form-item label="产品明细" prop="products">
           <div class="product-detail-list">
@@ -528,6 +630,21 @@
                     class="product-input product-total"
                   />
                 </el-form-item>
+                <el-form-item label="尺码/仓库" :required="true" class="product-form-item">
+                  <el-select
+                    v-model="prod.product_size"
+                    placeholder="请选择尺码"
+                    @change="val => handleProductSizeChange(val, idx)"
+                    :disabled="!prod.warehouseList || prod.warehouseList.length === 0"
+                  >
+                    <el-option
+                      v-for="wh in prod.warehouseList"
+                      :key="wh.id"
+                      :label="`${wh.warehouse_name} / ${wh.product_size} / 库存${wh.stock_quantity}`"
+                      :value="wh.product_size"
+                    />
+                  </el-select>
+                </el-form-item>
                 <el-form-item
                   label="备注"
                   class="product-form-item product-remark-item"
@@ -556,7 +673,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { Search, Refresh, Plus, Download, Delete } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, Download, Delete, Loading } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import dayjs from 'dayjs'
@@ -572,8 +689,11 @@ import {
   getSalesRecordsByCustomer,
   addSalesRecord,
   deleteSalesRecordByCustomerAndTime,
+  updateSalesRecordPaymentStatus
 } from '@/api/customer/salesrecords'
 import { getProductList } from '@/api/product/list'
+import { uploadFile } from '@/api/upload/upload'
+import { getWarehousesByProductId } from '@/api/warehouse/inventory'
 
 interface Customer {
   customer_id: number
@@ -847,6 +967,8 @@ const addSalesRecordFormRef = ref<FormInstance>()
 const addSalesRecordForm = reactive({
   sales_time: '',
   creator: 1,
+  payment_status: '',
+  payment_image: '',
   products: [
     {
       product_id: 0,
@@ -855,11 +977,15 @@ const addSalesRecordForm = reactive({
       unit_price: 0,
       total_price: 0,
       remark: '',
+      product_warehouse_id: 0,
+      product_size: '',
+      warehouseList: [],
     },
   ],
 })
 const addSalesRecordRules = reactive<FormRules>({
   sales_time: [{ required: true, message: '请选择销售时间', trigger: 'change' }],
+  payment_status: [{ required: true, message: '请选择付款状态', trigger: 'change' }],
   products: [
     {
       validator: (rule, value, callback) => {
@@ -913,12 +1039,18 @@ const querySearchProductSku = async (queryString, cb) => {
   )
 }
 
-const handleProductNameSelect = (item, idx) => {
+const handleProductNameSelect = async (item, idx) => {
   const prod = addSalesRecordForm.products[idx]
   prod.product_id = item.product_id
   prod.product_title = item.product_title
   prod.product_sku = item.product_sku
   prod.product_image = item.product_image
+  // 获取库存列表
+  const res = await getWarehousesByProductId(item.product_id)
+  prod.warehouseList = res.list || []
+  // 清空之前的选择
+  prod.product_size = ''
+  prod.product_warehouse_id = 0
 }
 
 const handleProductSkuSelect = (item, idx) => {
@@ -937,6 +1069,9 @@ const handleAddProductRow = () => {
     unit_price: 0,
     total_price: 0,
     remark: '',
+    product_warehouse_id: 0,
+    product_size: '',
+    warehouseList: [],
   })
 }
 const handleRemoveProductRow = (idx: number) => {
@@ -955,6 +1090,8 @@ const handleAddSalesRecord = () => {
   Object.assign(addSalesRecordForm, {
     sales_time: '',
     creator: 1,
+    payment_status: '',
+    payment_image: '',
     products: [
       {
         product_id: 0,
@@ -963,6 +1100,9 @@ const handleAddSalesRecord = () => {
         unit_price: 0,
         total_price: 0,
         remark: '',
+        product_warehouse_id: 0,
+        product_size: '',
+        warehouseList: [],
       },
     ],
   })
@@ -982,6 +1122,9 @@ const handleSubmitAddSalesRecord = async () => {
           unit_price: p.unit_price,
           total_price: p.total_price,
           remark: p.remark,
+          product_warehouse_id: p.product_warehouse_id,
+          payment_status: addSalesRecordForm.payment_status,
+          payment_image: addSalesRecordForm.payment_image,
         })),
         sales_time: addSalesRecordForm.sales_time,
         creator: addSalesRecordForm.creator,
@@ -1008,7 +1151,11 @@ const fetchSalesRecords = async (customerId: number) => {
       page: salesRecordPage.value,
       limit: salesRecordLimit.value,
     })
-    salesOrders.value = res.orders || []
+    // 给每个订单加上 updatingPaymentStatus
+    salesOrders.value = (res.orders || []).map(order => ({
+      ...order,
+      updatingPaymentStatus: false,
+    }))
     customerTotalAmount.value = res.customer_total_amount || '0.00'
     salesRecordTotal.value = res.pagination?.total || 0
   } finally {
@@ -1057,6 +1204,89 @@ function formatDate(dateStr: string) {
   if (!dateStr) return ''
   return dateStr.replace('T', ' ').replace(/\\.\\d+Z?$/, '')
 }
+
+// 上传前校验（可选）
+const beforeUploadPaymentImage = (file: File) => {
+  const isImage = file.type.startsWith('image/')
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件')
+  }
+  const isLt2M = file.size / 1024 / 1024 < 2
+  if (!isLt2M) {
+    ElMessage.error('图片大小不能超过2MB')
+  }
+  return isImage && isLt2M
+}
+
+// 自定义上传
+const customUploadPaymentImage = async (option: any) => {
+  try {
+    const res = await uploadFile(option.file)
+    // 假设返回格式为 { file: { url: 'xxx' } }
+    addSalesRecordForm.payment_image = res.file?.url || ''
+    ElMessage.success('上传成功')
+  } catch (e) {
+    ElMessage.error('上传失败，请重试')
+  }
+}
+
+// 兼容 el-upload 的 on-change（可选，主要用于切换图片时清理）
+const handlePaymentImageChange = (file: any) => {
+  // 这里可以做一些额外处理，如清理旧图片等
+}
+
+const handleProductSizeChange = (val, idx) => {
+  const prod = addSalesRecordForm.products[idx]
+  const wh = prod.warehouseList.find(w => w.product_size === val)
+  prod.product_warehouse_id = wh ? wh.id : 0
+}
+
+const handleUpdatePaymentStatus = async (order, newStatus) => {
+  order.updatingPaymentStatus = true
+  try {
+    const recordIds = order.products.map(p => p.record_id)
+    await updateSalesRecordPaymentStatus(recordIds, newStatus)
+    ElMessage.success('付款状态已更新')
+    if (salesRecordCustomerId.value) {
+      await fetchSalesRecords(salesRecordCustomerId.value)
+    }
+  } catch (e) {
+    ElMessage.error('更新失败，请重试')
+    if (salesRecordCustomerId.value) {
+      await fetchSalesRecords(salesRecordCustomerId.value)
+    }
+  } finally {
+    order.updatingPaymentStatus = false
+  }
+}
+
+// 编辑销售单弹窗相关
+const editOrderDialogVisible = ref(false)
+const editOrderForm = ref({
+  payment_status: '',
+  payment_image: '',
+  products: []
+})
+const editOrderFormOrderInfo = ref({
+  customer_id: 0,
+  sales_time: ''
+})
+
+const handleEditOrder = (order) => {
+  console.log('order', order)
+  editOrderDialogVisible.value = true
+  // 深拷贝order到editOrderForm，避免直接修改原数据
+  editOrderForm.value = {
+    payment_status: order.payment_status,
+    payment_image: order.payment_image,
+    products: order.products.map(p => ({ ...p }))
+  }
+  editOrderFormOrderInfo.value = {
+    customer_id: salesRecordCustomerId.value,
+    sales_time: order.sales_time
+  }
+}
+
 </script>
 
 <style scoped>
@@ -1224,6 +1454,14 @@ function formatDate(dateStr: string) {
   margin-bottom: 8px;
   font-weight: 500;
 }
+.order-sub-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 4px 0 8px 0;
+  font-size: 14px;
+  color: #666;
+}
 .order-products-table {
   background: #fff;
   border-radius: 6px;
@@ -1256,5 +1494,157 @@ function formatDate(dateStr: string) {
   font-size: 20px;
   font-weight: bold;
   color: #f56c6c;
+}
+
+.payment-image-uploader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.payment-image-upload-area {
+  width: 120px;
+  height: 120px;
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fafbfc;
+  transition: border-color 0.2s;
+  position: relative;
+}
+
+.payment-image-upload-area:hover {
+  border-color: #409eff;
+  background: #f0f7ff;
+}
+
+.payment-image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.payment-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #bbb;
+  font-size: 16px;
+  user-select: none;
+}
+
+.change-image-tip {
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+  background: rgba(255,255,255,0.7);
+  border-radius: 0 0 8px 8px;
+  pointer-events: none;
+}
+
+.customer-detail-dialog .detail-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 18px;
+}
+.customer-detail-dialog .avatar-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.customer-detail-dialog .avatar-placeholder {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #e6ecf5 0%, #f8fafd 100%);
+  color: #409EFF;
+  font-size: 28px;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.customer-detail-dialog .header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.customer-detail-dialog .customer-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #222;
+}
+.customer-detail-dialog .customer-subtitle {
+  font-size: 15px;
+  color: #888;
+  font-weight: 500;
+}
+.customer-detail-dialog .detail-section {
+  margin-bottom: 18px;
+}
+.customer-detail-dialog .section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #409EFF;
+  margin-bottom: 8px;
+  margin-top: 8px;
+  letter-spacing: 1px;
+}
+.customer-detail-dialog .deal-price {
+  color: #e67e22;
+  font-weight: 700;
+  font-size: 18px;
+}
+.customer-detail-dialog .el-descriptions {
+  background: #f8fafd;
+  border-radius: 10px;
+  padding: 8px 0;
+}
+.customer-detail-dialog .el-descriptions__label {
+  color: #888;
+  font-weight: 500;
+}
+.customer-detail-dialog .el-tag {
+  font-size: 13px;
+  padding: 0 12px;
+}
+.customer-detail-dialog .base-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0 8px 0;
+}
+.customer-detail-dialog .base-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  min-height: 28px;
+}
+.customer-detail-dialog .base-info-label {
+  min-width: 80px;
+  color: #888;
+  font-weight: 500;
+  font-size: 15px;
+  flex-shrink: 0;
+  text-align: right;
+  letter-spacing: 1px;
+}
+.customer-detail-dialog .base-info-value {
+  color: #222;
+  font-size: 15px;
+  word-break: break-all;
+  flex: 1;
 }
 </style>
