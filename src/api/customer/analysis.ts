@@ -42,3 +42,14 @@ export function getCustomerSalesPerformance() {
     method: 'get',
   })
 }
+
+/**
+ * 获取我的客户统计
+ * @returns Promise
+ */
+export function getMyCustomerStats() {
+  return request({
+    url: '/api/customers/my-stats',
+    method: 'get',
+  })
+}

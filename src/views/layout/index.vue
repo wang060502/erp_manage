@@ -88,21 +88,25 @@
             <el-icon><Operation /></el-icon>
             <span>出入库管理</span>
           </template>
-          <el-menu-item index="/inventory/in">
+          <el-menu-item index="/inventory/adjust">
             <el-icon><TopRight /></el-icon>
-            <span>入库管理</span>
+            <span>库存调整</span>
           </el-menu-item>
-          <el-menu-item index="/inventory/out">
+          <el-menu-item index="/inventory/myadjust">
             <el-icon><BottomLeft /></el-icon>
-            <span>出库管理</span>
+            <span>我的库存调整</span>
           </el-menu-item>
           <el-menu-item index="/inventory/transfer">
             <el-icon><Right /></el-icon>
             <span>调拨管理</span>
           </el-menu-item>
-          <el-menu-item index="/inventory/history">
-            <el-icon><Timer /></el-icon>
-            <span>库存记录</span>
+          <el-menu-item index="/inventory/mytransfer">
+            <el-icon><Right /></el-icon>
+            <span>我的调拨</span>
+          </el-menu-item>
+          <el-menu-item index="/inventory/analysis">
+            <el-icon><DataLine /></el-icon>
+            <span>出入库分析</span>
           </el-menu-item>
         </el-sub-menu>
 
@@ -126,7 +130,7 @@
           </el-menu-item>
         </el-sub-menu>
 
-        <!-- 订单管理 -->
+        <!-- 订单管理
         <el-sub-menu index="order">
           <template #title>
             <el-icon><Document /></el-icon>
@@ -144,9 +148,9 @@
             <el-icon><TrendCharts /></el-icon>
             <span>订单分析</span>
           </el-menu-item>
-        </el-sub-menu>
+        </el-sub-menu> -->
 
-        <!-- 物流管理 -->
+        <!-- 物流管理
         <el-sub-menu index="logistics">
           <template #title>
             <el-icon><Van /></el-icon>
@@ -164,7 +168,7 @@
             <el-icon><Money /></el-icon>
             <span>物流成本</span>
           </el-menu-item>
-        </el-sub-menu>
+        </el-sub-menu> -->
 
         <!-- 系统管理 -->
         <el-sub-menu index="system">

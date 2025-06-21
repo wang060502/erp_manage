@@ -100,6 +100,7 @@
         <el-table-column prop="unit_price" label="单价" width="80" />
         <el-table-column prop="total_price" label="总价" width="80" />
         <el-table-column prop="warehouse_name" label="仓库" min-width="120" />
+        <el-table-column prop="product_size" label="尺码" min-width="120" />
         <el-table-column prop="remark" label="备注" min-width="120">
           <template #default="{ row }">
             <span v-if="row.remark">{{ row.remark }}</span>

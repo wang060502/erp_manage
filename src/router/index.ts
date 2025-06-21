@@ -17,6 +17,13 @@ const router = createRouter({
           },
         },
         {
+          path: '/403',
+          component: () => import('@/views/layout/403.vue'),
+          meta: {
+            title: '403',
+          },
+        },
+        {
           path: '/user/info',
           component: () => import('@/views/user/index.vue'),
           meta: {
@@ -114,39 +121,47 @@ const router = createRouter({
           path: '/inventory',
           meta: {
             title: '出入库管理',
-            icon: 'Operation',
+            icon: 'Box',
           },
           children: [
             {
-              path: 'in',
-              component: () => import('@/views/inventory/in/index.vue'),
+              path: 'adjust',
+              component: () => import('@/views/inventory/adjust/list.vue'),
               meta: {
-                title: '入库管理',
+                title: '库存调整',
                 icon: 'TopRight',
               },
             },
             {
-              path: 'out',
-              component: () => import('@/views/inventory/out/index.vue'),
+              path: 'myadjust',
+              component: () => import('@/views/inventory/adjust/my.vue'),
               meta: {
-                title: '出库管理',
+                title: '我的库存调整',
                 icon: 'BottomLeft',
               },
             },
             {
               path: 'transfer',
-              component: () => import('@/views/inventory/transfer/index.vue'),
+              component: () => import('@/views/inventory/transfer/list.vue'),
               meta: {
                 title: '调拨管理',
                 icon: 'Right',
               },
             },
             {
-              path: 'history',
-              component: () => import('@/views/inventory/history/index.vue'),
+              path: 'mytransfer',
+              component: () => import('@/views/inventory/transfer/my.vue'),
               meta: {
-                title: '库存记录',
-                icon: 'Timer',
+                title: '我的调拨',
+                icon: 'BottomLeft',
+              },
+            },
+            {
+              path: 'analysis',
+              component: () => import('@/views/inventory/analysis/index.vue'),
+              meta: {
+                title: '出入库分析',
+                icon: 'DataLine',
               },
             },
           ],
@@ -308,6 +323,11 @@ const router = createRouter({
     {
       path: '/login',
       component: () => import('@/views/login/index.vue'),
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'NotFound',
+      component: () => import('@/views/layout/404.vue'),
     },
   ],
 })

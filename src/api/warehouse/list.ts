@@ -90,3 +90,20 @@ export function batchDeleteWarehouses(ids: number[]) {
     data: { ids },
   })
 }
+
+/**
+ * @description 获取各仓库统计数据
+ */
+export interface WarehouseStat {
+  warehouse_id: number;
+  warehouse_name: string;
+  product_count: number;
+  total_stock_quantity: number;
+}
+
+export function getProductWarehouseStats(): Promise<{ data: WarehouseStat[] }> {
+  return request({
+    url: '/api/product-warehouses/stats',
+    method: 'get',
+  })
+}

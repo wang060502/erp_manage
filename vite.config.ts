@@ -12,6 +12,7 @@ export default defineConfig({
   },
   server: {
     // port: 8080,
+    host: true,
     proxy: {
       '/api': {
         target: 'http://localhost:3000', // 目标 API 服务器地址

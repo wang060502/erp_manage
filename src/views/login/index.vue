@@ -199,8 +199,10 @@
 // 全部为简体中文
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, type FormInstance } from 'element-plus'
 import { loginUser, registerUser } from '@/api/login/login'
+
+defineOptions({ name: 'LoginPage' })
 
 const router = useRouter()
 const activeTab = ref<'login' | 'register'>('login')
@@ -211,9 +213,12 @@ const rememberMe = ref(false)
 const loginForm = reactive({ username: '', password: '' })
 const loginErrorMsg = ref('')
 const loginErrorField = ref('')
-const loginFormRef = ref()
+const loginFormRef = ref<FormInstance>()
 const loginRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, message: '用户名最少需要三个字', trigger: 'blur' },
+  ],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 }
 
@@ -221,7 +226,7 @@ const loginRules = {
 const registerForm = reactive({ username: '', password: '', realName: '', email: '', mobile: '' })
 const registerErrorMsg = ref('')
 const registerErrorField = ref('')
-const registerFormRef = ref()
+const registerFormRef = ref<FormInstance>()
 const registerRules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [
@@ -254,11 +259,11 @@ const handleLogin = () => {
   loginErrorMsg.value = ''
   loginErrorField.value = ''
   if (!loginFormRef.value) return
-  loginFormRef.value.validate(async (valid: boolean, fields: any) => {
+  loginFormRef.value.validate(async (valid: boolean, fields) => {
     if (!valid) {
-      if (fields.username) loginErrorField.value = 'username'
-      else if (fields.password) loginErrorField.value = 'password'
-      loginErrorMsg.value = fields.username?.[0]?.message || fields.password?.[0]?.message || ''
+      if (fields?.username) loginErrorField.value = 'username'
+      else if (fields?.password) loginErrorField.value = 'password'
+      loginErrorMsg.value = fields?.username?.[0]?.message || fields?.password?.[0]?.message || ''
       return
     }
     loading.value = true
@@ -283,8 +288,8 @@ const handleLogin = () => {
       } else {
         loginErrorMsg.value = data.message || '登录失败'
       }
-    } catch (e: any) {
-      loginErrorMsg.value = e?.message || '登录失败'
+    } catch (e) {
+      loginErrorMsg.value = (e as Error)?.message || '登录失败'
     } finally {
       loading.value = false
     }
@@ -296,19 +301,19 @@ const handleRegister = () => {
   registerErrorMsg.value = ''
   registerErrorField.value = ''
   if (!registerFormRef.value) return
-  registerFormRef.value.validate(async (valid: boolean, fields: any) => {
+  registerFormRef.value.validate(async (valid: boolean, fields) => {
     if (!valid) {
-      if (fields.username) registerErrorField.value = 'username'
-      else if (fields.password) registerErrorField.value = 'password'
-      else if (fields.realName) registerErrorField.value = 'realName'
-      else if (fields.email) registerErrorField.value = 'email'
-      else if (fields.mobile) registerErrorField.value = 'mobile'
+      if (fields?.username) registerErrorField.value = 'username'
+      else if (fields?.password) registerErrorField.value = 'password'
+      else if (fields?.realName) registerErrorField.value = 'realName'
+      else if (fields?.email) registerErrorField.value = 'email'
+      else if (fields?.mobile) registerErrorField.value = 'mobile'
       registerErrorMsg.value =
-        fields.username?.[0]?.message ||
-        fields.password?.[0]?.message ||
-        fields.realName?.[0]?.message ||
-        fields.email?.[0]?.message ||
-        fields.mobile?.[0]?.message ||
+        fields?.username?.[0]?.message ||
+        fields?.password?.[0]?.message ||
+        fields?.realName?.[0]?.message ||
+        fields?.email?.[0]?.message ||
+        fields?.mobile?.[0]?.message ||
         ''
       return
     }
@@ -328,8 +333,8 @@ const handleRegister = () => {
       } else {
         registerErrorMsg.value = data.message || '注册失败'
       }
-    } catch (e: any) {
-      registerErrorMsg.value = e?.message || '注册失败'
+    } catch (e) {
+      registerErrorMsg.value = (e as Error)?.message || '注册失败'
     } finally {
       loading.value = false
     }

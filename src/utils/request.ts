@@ -102,13 +102,14 @@ instance.interceptors.response.use(
           message = '未授权，请重新登录'
           // 清除token并跳转到登录页
           const token = localStorage.getItem('token')
-          if (token) {
+          if (!token) {
             localStorage.removeItem('token')
             router.push('/login')
           }
           break
         case 403:
           message = '拒绝访问:' + error.response.data.error
+          router.push('/403')
           break
         case 404:
           message = '请求的资源不存在'

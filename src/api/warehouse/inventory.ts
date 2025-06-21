@@ -27,6 +27,7 @@ export function addProductWarehouseRecords(items: Array<{
 export function getProductWarehouseList(params?: {
   page?: number;
   limit?: number;
+  product_id?: number;
   product_name?: string;
   product_sku?: string;
   warehouse_id?: number;
