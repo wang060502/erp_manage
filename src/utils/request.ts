@@ -6,6 +6,8 @@ import { ElLoading, ElMessage } from 'element-plus'
 // 创建 Axios 实例
 const instance: AxiosInstance = axios.create({
   baseURL: '/api',
+  // baseURL: 'http://47.253.153.115:3000',
+  // baseURL: 'https://admin.essentialshdd.com',
   timeout: 7000,
 })
 

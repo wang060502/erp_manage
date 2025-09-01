@@ -74,10 +74,10 @@
         <el-icon><Plus /></el-icon>
         新增客户
       </el-button>
-      <el-button type="success" @click="handleExport">
+      <!-- <el-button type="success" @click="handleExport">
         <el-icon><Download /></el-icon>
         导出数据
-      </el-button>
+      </el-button> -->
       <el-button type="danger" @click="handleBatchDelete">
         <el-icon><Delete /></el-icon>
         批量删除
@@ -1054,12 +1054,18 @@ const handleProductNameSelect = async (item, idx) => {
   prod.product_warehouse_id = 0
 }
 
-const handleProductSkuSelect = (item, idx) => {
+const handleProductSkuSelect = async (item, idx) => {
   const prod = addSalesRecordForm.products[idx]
   prod.product_id = item.product_id
   prod.product_title = item.product_title
   prod.product_sku = item.product_sku
   prod.product_image = item.product_image
+  // 获取库存列表
+  const res = await getWarehousesByProductId(item.product_id)
+  prod.warehouseList = res.list || []
+  // 清空之前的选择
+  prod.product_size = ''
+  prod.product_warehouse_id = 0
 }
 
 const handleAddProductRow = () => {
@@ -1114,6 +1120,11 @@ const handleSubmitAddSalesRecord = async () => {
   if (!addSalesRecordFormRef.value) return
   await addSalesRecordFormRef.value.validate(async (valid) => {
     if (valid && salesRecordCustomerId.value) {
+      // 将时间转换为本地时间字符串
+      const localSalesTime = addSalesRecordForm.sales_time
+        ? dayjs(addSalesRecordForm.sales_time).format('YYYY-MM-DD HH:mm:ss')
+        : '';
+
       await addSalesRecord({
         customer_id: salesRecordCustomerId.value,
         products: addSalesRecordForm.products.map((p) => ({
@@ -1127,7 +1138,7 @@ const handleSubmitAddSalesRecord = async () => {
           payment_status: addSalesRecordForm.payment_status,
           payment_image: addSalesRecordForm.payment_image,
         })),
-        sales_time: addSalesRecordForm.sales_time,
+        sales_time: localSalesTime,
         creator: addSalesRecordForm.creator,
       })
       ElMessage.success('新增销售记录成功')

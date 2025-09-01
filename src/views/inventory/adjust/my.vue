@@ -44,13 +44,14 @@
                 <strong>操作类型:</strong>
                 <template v-if="log.operation_subtype">
                   <span style="margin-left: 8px; color: #888;">
-                    {{ subtypeMap[log.operation_subtype] || log.operation_subtype }}
+                    {{ getSubtypeLabel(log.operation_subtype) }}
                   </span>
                 </template>
               </span>
             </div>
             <div class="header-right">
               <el-tag :type="getOperationTypeTag(log.operation_type)" effect="light" class="operation-tag">{{ formatOperationType(log.operation_type) }}</el-tag>
+              <el-button type="danger" size="small" style="margin-left: 8px;" @click="handleRollback(log.operation_no)">回滚此单</el-button>
             </div>
           </div>
           <el-table :data="log.display_items" :span-method="logListSpanMethod" :show-header="true" class="log-table">
@@ -211,12 +212,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted, reactive, computed, watch } from 'vue'
-import { getMyInventoryLogs, adjustInventory } from '@/api/inventory'
+import { getMyInventoryLogs, adjustInventory, rollbackInventoryByReference } from '@/api/inventory'
 import type { GetMyInventoryLogsParams, AdjustInventoryPayload } from '@/api/inventory'
 import { getProductList } from '@/api/product/list'
 import { getWarehouseList } from '@/api/warehouse/list'
 import { getProductWarehouseList } from '@/api/warehouse/inventory'
-import { ElMessage, type FormInstance } from 'element-plus'
+import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { Plus, Delete, CopyDocument } from '@element-plus/icons-vue'
 import ProductAutoComplete from '@/components/ProductAutoComplete.vue'
 import { subtypeMap } from '@/api/inventory/typeMap'
@@ -575,11 +576,11 @@ const addProductToTable = (product: ProductInfo) => {
 const handleWarehouseChange = async (row: FormDisplayItem) => {
     row.product_size = '';
     row.available_sizes = [];
-    if (!row.product_id || !row.warehouse_id) return;
+    if (!row.product_sku || !row.warehouse_id) return;
     row.sizes_loading = true;
     try {
-        const res = await getProductWarehouseList({ product_id: row.product_id }) as unknown as ProductWarehouseResponse;
-        const productData = res.list.find((p: ProductInfo) => p.product_id === row.product_id);
+        const res = await getProductWarehouseList({ product_sku: row.product_sku }) as unknown as ProductWarehouseResponse;
+        const productData = res.list.find((p: ProductInfo) => p.product_sku === row.product_sku);
         if (productData && productData.warehouses) {
             const warehouseData = productData.warehouses.find((w: WarehouseData) => w.warehouse_id === row.warehouse_id);
             row.available_sizes = warehouseData ? warehouseData.stocks : [];
@@ -683,6 +684,57 @@ const getOperationTypeTag = (type: string): '' | 'success' | 'warning' | 'info' 
   return map[type] || ''
 }
 
+// 新增：安全获取子类型中文
+const getSubtypeLabel = (subtype: string) => {
+  return (subtypeMap as Record<string, string>)[subtype] || subtype
+}
+
+// 修正：避免索引签名报错
+const getSubtypeOptions = (type: string) => {
+  const map: Record<string, (keyof typeof subtypeMap)[]> = {
+    INBOUND: [
+      'PURCHASE_INBOUND', 'TRANSFER_INBOUND', 'RETURN_INBOUND', 'STOCK_PREPARE', 'INVENTORY_PROFIT', 'OTHER_INBOUND'
+    ],
+    OUTBOUND: [
+      'SALES_OUTBOUND', 'TRANSFER_OUTBOUND', 'RETURN_SUPPLIER', 'SAMPLE_OUTBOUND', 'INVENTORY_LOSS', 'SCRAP_OUTBOUND', 'VIRTUAL_OUTBOUND'
+    ],
+    ADJUSTMENT: [
+      'FULL_CHECK', 'SAMPLE_CHECK', 'CYCLE_CHECK', 'ASSIGN_CHECK', 'SYSTEM_CHECK'
+    ]
+  }
+  return (map[type as keyof typeof map] || []).map(key => ({ value: key, label: (subtypeMap as Record<string, string>)[key] }))
+}
+
+// 新增：按操作单号回滚
+const handleRollback = async (referenceNo: string) => {
+  if (!referenceNo) {
+    ElMessage.warning('未找到操作单号，无法回滚')
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      `确定回滚操作单号 “${referenceNo}” 的库存变更吗？此操作不可恢复！`,
+      '提示',
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+    )
+  } catch {
+    return
+  }
+  try {
+    const res = await rollbackInventoryByReference(referenceNo)
+    const code = (res as unknown as { code?: number }).code
+    if (code === undefined || code === 200) {
+      ElMessage.success('回滚成功')
+      await fetchMyLogs()
+    } else {
+      ElMessage.error((res as unknown as { message?: string }).message || '回滚失败')
+    }
+  } catch (e) {
+    ElMessage.error('回滚失败')
+    console.error('回滚失败:', e)
+  }
+}
+
 // --- Span method for the log list table ---
 interface LogListSpanProps {
   row: DisplayItem
@@ -730,21 +782,6 @@ const formatDate = (date: Date): string => {
   const minutes = pad(date.getMinutes());
   const seconds = pad(date.getSeconds());
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-};
-
-const getSubtypeOptions = (type: string) => {
-  const map: Record<string, (keyof typeof subtypeMap)[]> = {
-    INBOUND: [
-      'PURCHASE_INBOUND', 'TRANSFER_INBOUND', 'RETURN_INBOUND', 'STOCK_PREPARE', 'INVENTORY_PROFIT', 'OTHER_INBOUND'
-    ],
-    OUTBOUND: [
-      'SALES_OUTBOUND', 'TRANSFER_OUTBOUND', 'RETURN_SUPPLIER', 'SAMPLE_OUTBOUND', 'INVENTORY_LOSS', 'SCRAP_OUTBOUND', 'VIRTUAL_OUTBOUND'
-    ],
-    ADJUSTMENT: [
-      'FULL_CHECK', 'SAMPLE_CHECK', 'CYCLE_CHECK', 'ASSIGN_CHECK', 'SYSTEM_CHECK'
-    ]
-  };
-  return (map[type as keyof typeof map] || []).map(key => ({ value: key, label: subtypeMap[key] }));
 };
 
 onMounted(async () => {

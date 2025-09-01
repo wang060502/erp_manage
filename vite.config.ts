@@ -11,10 +11,12 @@ export default defineConfig({
     },
   },
   server: {
-    // port: 8080,
+    port: 8081,
     host: true,
     proxy: {
       '/api': {
+        // target: 'http://47.253.153.115:3000', // 目标 API 服务器地址
+        // target: 'http://admin.essentialshdd.com', // 目标 API 服务器地址
         target: 'http://localhost:3000', // 目标 API 服务器地址
         changeOrigin: true, // 是否改变源
         rewrite: (path) => path.replace(/^\/api/, ''), // 路径重写

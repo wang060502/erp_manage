@@ -74,10 +74,10 @@
         <el-icon><Plus /></el-icon>
         新增仓库
       </el-button>
-      <el-button type="success" @click="handleExport">
+      <!-- <el-button type="success" @click="handleExport">
         <el-icon><Download /></el-icon>
         导出数据
-      </el-button>
+      </el-button> -->
       <el-button type="danger" @click="handleBatchDelete">
         <el-icon><Delete /></el-icon>
         批量删除
@@ -133,7 +133,7 @@
           <template #default="{ row }">
             <el-button-group>
               <el-button type="primary" link @click="handleEdit(row)"> 编辑 </el-button>
-              <el-button type="primary" link @click="handleInventory(row)"> 库存 </el-button>
+              <!-- <el-button type="primary" link @click="handleInventory(row)"> 库存 </el-button> -->
               <el-button type="danger" link @click="handleDelete(row)"> 删除 </el-button>
             </el-button-group>
           </template>

@@ -41,6 +41,10 @@
         <el-icon><Plus /></el-icon>
         新增库存
       </el-button>
+      <el-button type="success" @click="handleExportInventory" :disabled="!searchForm.warehouse_id">
+        <el-icon><Download /></el-icon>
+        导出库存
+      </el-button>
     </div>
 
     <!-- 库存列表卡片分组 -->
@@ -102,7 +106,7 @@
               <template #default="{ row }">
                 <el-table
                   :data="row.stocks"
-                  size="mini"
+                  size="small"
                   style=" margin: 0; background: #f9fbfd;"
                   class="inner-stock-table"
                   :header-cell-style="{ background: '#f5f7fa', color: '#888', fontWeight: 500, fontSize: '13px' }"
@@ -497,13 +501,14 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { Search, Refresh, Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, Download } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   addProductWarehouseRecords,
   getProductWarehouseList,
   updateProductWarehouseRecords,
   deleteProductWarehouseRecord,
+  exportWarehouseInventoryToExcel,
 } from '@/api/warehouse/inventory'
 import ProductAutoComplete from '@/components/ProductAutoComplete.vue'
 import { getWarehouseList } from '@/api/warehouse/list'
@@ -516,6 +521,7 @@ interface ProductWarehouse {
     id: number
     product_size: string
     stock_quantity: number
+    safe_stock_quantity: number
   }>
 }
 
@@ -855,6 +861,89 @@ function setAllSafeStock() {
   })
 }
 
+const handleExportInventory = async () => {
+  if (!searchForm.warehouse_id) {
+    ElMessage.warning('请选择要导出的仓库')
+    return
+  }
+
+  console.log('开始导出，仓库ID:', searchForm.warehouse_id)
+
+  try {
+    console.log('调用导出API...')
+
+    // 添加原始响应的调试
+    const rawResponse = await exportWarehouseInventoryToExcel(searchForm.warehouse_id)
+    console.log('原始API响应:', rawResponse)
+    console.log('响应类型:', typeof rawResponse)
+    console.log('响应结构:', Object.keys(rawResponse))
+
+    // 检查是否有 code 字段
+    if ('code' in rawResponse) {
+      console.log('响应包含 code 字段:', rawResponse.code)
+    }
+
+    const res = rawResponse
+    console.log('API调用成功，返回数据:', res)
+
+    // 根据接口返回的数据格式处理
+    if (res.data && res.data.download_url) {
+      console.log('res.data.download_url', res.data.download_url)
+      // 直接使用 window.open 打开下载链接，就像销售列表一样
+      window.open(res.data.download_url, '_blank')
+
+      // 显示导出统计信息
+      ElMessage.success(`导出成功！共导出 ${res.data.total_products} 个产品，总库存 ${res.data.total_stock} 件`)
+
+      // 可以在这里显示详细的导出统计信息
+      console.log('导出统计:', {
+        仓库名称: res.data.warehouse_name,
+        产品总数: res.data.total_products,
+        总库存: res.data.total_stock,
+        正常库存: res.data.normal_stock,
+        低库存: res.data.low_stock,
+        缺货: res.data.out_of_stock,
+        下载链接: res.data.download_url
+      })
+
+    } else {
+      console.log('没有 download_url，使用 blob 方式，res.data:', res.data)
+      // 如果没有 download_url，使用原来的 blob 方式
+      const blob = new Blob([res.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+
+      // 获取仓库名称用于文件名
+      const warehouseName = warehouseOptions.value.find(w => w.id === searchForm.warehouse_id)?.name || '仓库'
+      link.download = `${warehouseName}库存表.xlsx`
+      link.click()
+      window.URL.revokeObjectURL(url)
+
+      ElMessage.success('导出成功')
+    }
+  } catch (error: unknown) {
+    console.error('导出失败，详细错误:', error)
+    console.error('错误类型:', typeof error)
+
+    if (error instanceof Error) {
+      console.error('错误消息:', error.message)
+      ElMessage.error(`导出失败: ${error.message}`)
+    } else if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { status?: number; data?: unknown } }
+      console.error('错误响应:', axiosError.response)
+      console.error('错误状态:', axiosError.response?.status)
+      console.error('错误数据:', axiosError.response?.data)
+      ElMessage.error(`导出失败: HTTP ${axiosError.response?.status || '未知状态'}`)
+    } else {
+      console.error('未知错误类型:', error)
+      ElMessage.error('导出失败: 未知错误')
+    }
+  }
+}
+
 onMounted(() => {
   fetchWarehouses()
   fetchInventoryList()
@@ -1149,4 +1238,72 @@ export default {
   background: #f0f2f5;
   margin-bottom: 18px;
 }
+/* .export-stats-card { // This line is removed */
+/*   margin-bottom: 20px; // This line is removed */
+/* } // This line is removed */
+/* .stats-card { // This line is removed */
+/*   border-radius: 12px; // This line is removed */
+/*   box-shadow: 0 4px 24px #0001; // This line is removed */
+/*   padding: 18px 24px; // This line is removed */
+/*   display: flex; // This line is removed */
+/*   flex-direction: column; // This line is removed */
+/*   gap: 12px; // This line is removed */
+/* } // This line is removed */
+/* .stats-header { // This line is removed */
+/*   display: flex; // This line is removed */
+/*   align-items: center; // This line is removed */
+/*   gap: 8px; // This line is removed */
+/* } // This line is removed */
+/* .stats-title { // This line is removed */
+/*   font-size: 18px; // This line is removed */
+/*   font-weight: bold; // This line is removed */
+/*   color: #222; // This line is removed */
+/*   display: flex; // This line is removed */
+/*   align-items: center; // This line is removed */
+/* } // This line is removed */
+/* .stats-warehouse { // This line is removed */
+/*   font-size: 14px; // This line is removed */
+/*   color: #888; // This line is removed */
+/* } // This line is removed */
+/* .stats-content { // This line is removed */
+/*   display: flex; // This line is removed */
+/*   flex-direction: column; // This line is removed */
+/*   gap: 8px; // This line is removed */
+/* } // This line is removed */
+/* .stats-row { // This line is removed */
+/*   display: flex; // This line is removed */
+/*   justify-content: space-between; // This line is removed */
+/*   align-items: center; // This line is removed */
+/*   flex-wrap: wrap; // This line is removed */
+/*   gap: 15px; // This line is removed */
+/* } // This line is removed */
+/* .stats-item { // This line is removed */
+/*   display: flex; // This line is removed */
+/*   flex-direction: column; // This line is removed */
+/*   align-items: center; // This line is removed */
+/*   gap: 4px; // This line is removed */
+/* } // This line is removed */
+/* .stats-label { // This line is removed */
+/*   font-size: 13px; // This line is removed */
+/*   color: #888; // This line is removed */
+/* } // This line is removed */
+/* .stats-value { // This line is removed */
+/*   font-size: 18px; // This line is removed */
+/*   font-weight: bold; // This line is removed */
+/* } // This line is removed */
+/* .stats-value.primary { // This line is removed */
+/*   color: #409eff; // This line is removed */
+/* } // This line is removed */
+/* .stats-value.success { // This line is removed */
+/*   color: #67c23a; // This line is removed */
+/* } // This line is removed */
+/* .stats-value.normal { // This line is removed */
+/*   color: #909399; // This line is removed */
+/* } // This line is removed */
+/* .stats-value.warning { // This line is removed */
+/*   color: #e6a23c; // This line is removed */
+/* } // This line is removed */
+/* .stats-value.danger { // This line is removed */
+/*   color: #f56c6c; // This line is removed */
+/* } // This line is removed */
 </style>

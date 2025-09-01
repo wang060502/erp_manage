@@ -92,7 +92,7 @@
               <template #default="{ row }">
                 <div style="display: flex; align-items: center; gap: 12px;">
                   <el-image :src="row.product_image" style="width:40px;height:40px;border-radius:4px; flex-shrink: 0;" fit="cover">
-                    <template #error><div class="image-slot">无图</div></template>
+                    <template #error><div class="image-slot">无图 </div></template>
                   </el-image>
                   <div>
                     <div><strong>{{ row.product_title }}</strong></div>
@@ -218,7 +218,7 @@ const fetchLogs = async () => {
             product_id: product.product_id,
             product_title: product.product_title,
             product_sku: product.product_sku,
-            product_image: productInfo?.product_image,
+            product_image: product?.product_image,
             warehouse_name: detail.warehouse_name,
             product_size: detail.product_size,
             change_quantity: detail.change_quantity,

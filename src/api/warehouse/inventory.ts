@@ -100,3 +100,16 @@ export function getProductWarehouseWarningList(params?: {
   })
 }
 
+/**
+ * 导出指定仓库库存为Excel
+ * @param warehouseId 仓库ID
+ * @returns Promise<any> 返回Excel文件流
+ */
+export function exportWarehouseInventoryToExcel(warehouseId: number) {
+  return request({
+    url: `/api/product-warehouses/export/${warehouseId}`,
+    method: 'get',
+    // 移除 responseType: 'blob'，因为这可能导致响应拦截器问题
+  })
+}
+

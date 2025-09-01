@@ -168,7 +168,6 @@ export function getInventoryStatsOperations(): Promise<{ data: InventoryStatsDat
   })
 }
 
-
 /**
  * @description 获取我的出入库统计
  * @returns {Promise<{ data: InventoryStatsData }>}
@@ -177,5 +176,23 @@ export function getMyInventoryStats(): Promise<{ data: InventoryStatsData }> {
   return request({
     url: '/api/inventory/my-stats',
     method: 'get',
+  })
+}
+
+/**
+ * @description 按操作单号删除库存操作记录（回滚库存）
+ * @param referenceNo 操作单号
+ * @returns Promise<RollbackByReferenceResponse>
+ */
+export interface RollbackByReferenceResponse {
+  code: number;
+  message: string;
+  data?: Record<string, never>;
+}
+
+export function rollbackInventoryByReference(referenceNo: string): Promise<RollbackByReferenceResponse> {
+  return request({
+    url: `/api/inventory/logs/by-reference/${encodeURIComponent(referenceNo)}`,
+    method: 'delete',
   })
 }
